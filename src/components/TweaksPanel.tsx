@@ -267,6 +267,69 @@ export function TweaksPanel({
         ))}
       </Row>
 
+      <Row t={t} label="Shortcut">
+        <span style={{ fontSize: 10.5, color: t.fgMuted }}>
+          {tweaks.paletteShortcut ?? "Ctrl+Shift+V"}
+        </span>
+        <button
+          onClick={() => {
+            const next: Tweaks = {
+              ...tweaks,
+              paletteShortcut: tweaks.paletteShortcut === "Ctrl+Shift+V"
+                ? "Ctrl+Space"
+                : "Ctrl+Shift+V",
+            };
+            onChange(next);
+            void invoke("set_shortcut", {
+              sc: {
+                modifiers: tweaks.paletteShortcut === "Ctrl+Shift+V" ? 7 : 6,
+                key: tweaks.paletteShortcut === "Ctrl+Shift+V" ? "Space" : "KeyV",
+              },
+            });
+          }}
+          style={{
+            padding: "4px 10px",
+            fontFamily: t.fontMono,
+            fontSize: 10.5,
+            fontWeight: 500,
+            color: t.fgMuted,
+            background: "transparent",
+            border: `1px solid ${t.borderSoft}`,
+            borderRadius: 4,
+            cursor: "pointer",
+            letterSpacing: 0.5,
+            textTransform: "uppercase",
+          }}
+        >
+          Rebind
+        </button>
+      </Row>
+
+      <Row t={t} label="Launch">
+        <button
+          onClick={() => {
+            const next = !tweaks.autostart;
+            onChange({ ...tweaks, autostart: next });
+            void invoke("set_autostart", { enabled: next });
+          }}
+          style={{
+            padding: "4px 10px",
+            fontFamily: t.fontMono,
+            fontSize: 10.5,
+            fontWeight: 500,
+            color: tweaks.autostart ? "#fff" : t.fgMuted,
+            background: tweaks.autostart ? t.accent : "transparent",
+            border: `1px solid ${tweaks.autostart ? t.accent : t.borderSoft}`,
+            borderRadius: 4,
+            cursor: "pointer",
+            letterSpacing: 0.5,
+            textTransform: "uppercase",
+          }}
+        >
+          {tweaks.autostart ? "on" : "off"}
+        </button>
+      </Row>
+
       <div
         style={{
           marginTop: 8,
