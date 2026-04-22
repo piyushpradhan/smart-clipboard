@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Clipboard — All Designs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; }
+  body { background: #0b0b10; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="tokens.jsx"></script>
+<script type="text/babel" src="primitives.jsx"></script>
+<script type="text/babel" src="app-state.jsx"></script>
+<script type="text/babel" src="palette.jsx"></script>
+<script type="text/babel" src="library.jsx"></script>
+
+<script type="text/babel">
+
+function Showcase() {
+  const t = buildTheme('dark', 285, 'compact', 'geist');
+  const tLight = buildTheme('light', 285, 'compact', 'geist');
+
+  // Fresh faux app instance for non-interactive frames.
+  const fakeApp = {
+    items: CLIP_ITEMS.map(i => ({ ...i })),
+    copyItem: () => {}, pinItem: () => {}, deleteItem: () => {},
+    updateLabel: () => {},
+    setPaletteOpen: () => {}, setLibraryOpen: () => {},
+  };
+
+  return (
+    <DesignCanvas>
+      <div style={{ padding: '0 60px 40px', maxWidth: 1400 }}>
+        <div style={{
+          fontSize: 11, letterSpacing: 2, textTransform: 'uppercase',
+          color: 'oklch(50% 0.14 285)',
+          fontFamily: "'Geist Mono', ui-monospace, monospace",
+          fontWeight: 600, marginBottom: 10,
+        }}>Smart Clipboard · complete design map</div>
+        <div style={{
+          fontSize: 32, fontWeight: 600, letterSpacing: -0.8,
+          color: 'rgba(40,30,20,0.9)',
+          fontFamily: "'Geist', system-ui, sans-serif",
+          lineHeight: 1.15, maxWidth: 900,
+        }}>Every surface and state, side-by-side.</div>
+        <div style={{
+          fontSize: 15, color: 'rgba(60,50,40,0.7)',
+          marginTop: 10, maxWidth: 800, lineHeight: 1.5,
+          fontFamily: "'Geist', system-ui, sans-serif",
+        }}>
+          Two surfaces — a global <b>palette</b> for the 5-second paste loop, and a full <b>library</b> window
+          for browsing, searching, and managing history. Plus tray menu, toasts, edge states.
+          Open <b>Smart Clipboard.html</b> for the interactive version.
+        </div>
+      </div>
+
+      {/* ─────────────── Section 1: The surface map ─────────────── */}
+      <DCSection title="1 · Entry points" subtitle="How users invoke Smart Clipboard.">
+        <DCArtboard label="system tray — idle state" width={520} height={280}>
+          <TrayIdle t={t}/>
+        </DCArtboard>
+        <DCArtboard label="system tray — menu open (right-click or click ✦)" width={520} height={440}>
+          <TrayOpen t={t} app={fakeApp}/>
+        </DCArtboard>
+        <DCArtboard label="global shortcut hint (first launch)" width={520} height={280}>
+          <ShortcutHint t={t}/>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ─────────────── Section 2: Palette states ─────────────── */}
+      <DCSection title="2 · Palette — quick-launch overlay" subtitle="⌘Space anywhere. Keyboard-first. Floats on top of whatever you're doing.">
+        <DCArtboard label="default — history on open (pinned first)" width={780} height={600}>
+          <PaletteFrame t={t}>
+            <Palette t={t} showLabels categoryMode="chip" app={fakeApp} onClose={()=>{}}/>
+          </PaletteFrame>
+        </DCArtboard>
+        <DCArtboard label="fuzzy search — instant filter as you type" width={780} height={600}>
+          <PaletteFrame t={t}>
+            <Palette t={t} showLabels categoryMode="chip" app={fakeApp} onClose={()=>{}}
+              initialQuery="error" initialMode="fuzzy"/>
+          </PaletteFrame>
+        </DCArtboard>
+        <DCArtboard label="semantic — Tab to toggle · natural language" width={780} height={600}>
+          <PaletteFrame t={t}>
+            <Palette t={t} showLabels categoryMode="chip" app={fakeApp} onClose={()=>{}}
+              initialQuery="that error from terminal" initialMode="semantic"/>
+          </PaletteFrame>
+        </DCArtboard>
+        <DCArtboard label="no results — graceful fallback" width={780} height={600}>
+          <PaletteFrame t={t}>
+            <Palette t={t} showLabels categoryMode="chip" app={fakeApp} onClose={()=>{}}
+              initialQuery="zzzzzzz" initialMode="fuzzy"/>
+          </PaletteFrame>
+        </DCArtboard>
+        <DCArtboard label="light theme variant" width={780} height={600}>
+          <PaletteFrame t={tLight}>
+            <Palette t={tLight} showLabels categoryMode="chip" app={fakeApp} onClose={()=>{}}/>
+          </PaletteFrame>
+        </DCArtboard>
+      </DCSection>
+
+      {/* ─────────────── Section 3: Library — the full app window ─────────────── */}
+      <DCSection title="3 · Library — the full app window" subtitle="Sidebar filters, fuzzy + semantic search, time-grouped history, configurable preview pane.">
+        <DCArtboard label="default — grouped by time, split preview" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialSelectedId="c01"/>
+          </LibraryFrame>
+        </DCArtboard>
+        <DCArtboard label="filtered by Category — Code only" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialFilter="code" initialSelectedId="c01"/>
+          </LibraryFrame>
+        </DCArtboard>
+        <DCArtboard label="Pinned filter" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialFilter="pinned" initialSelectedId="c01"/>
+          </LibraryFrame>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection title="4 · Library — search modes" subtitle="Fuzzy by default, Enter promotes to semantic.">
+        <DCArtboard label="fuzzy — substring + subsequence match" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialQuery="tauri" initialMode="fuzzy" initialSelectedId="c02"/>
+          </LibraryFrame>
+        </DCArtboard>
+        <DCArtboard label="semantic — concept expansion, ranked by intent" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialQuery="flight confirmation" initialMode="semantic" initialSelectedId="c07"/>
+          </LibraryFrame>
+        </DCArtboard>
+        <DCArtboard label="empty search result" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialQuery="xyzzy" initialMode="fuzzy"/>
+          </LibraryFrame>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection title="5 · Library — preview & edit modes" subtitle="Preview style is configurable; rename is inline.">
+        <DCArtboard label="inline preview (⌘I) — wider list, no split" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="inline" app={fakeApp}
+              initialSelectedId="c01"/>
+          </LibraryFrame>
+        </DCArtboard>
+        <DCArtboard label="rename mode (E key) — inline label edit" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialSelectedId="c03" initialEditing/>
+          </LibraryFrame>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection title="6 · Library — content type rendering" subtitle="Each clip type renders true to its content.">
+        <DCArtboard label="code — syntax-aware monospace block" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialSelectedId="c09"/>
+          </LibraryFrame>
+        </DCArtboard>
+        <DCArtboard label="color — swatch + hex" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialSelectedId="c05"/>
+          </LibraryFrame>
+        </DCArtboard>
+        <DCArtboard label="long text — pricing paragraph" width={1080} height={680}>
+          <LibraryFrame t={t}>
+            <Library t={t} showLabels categoryMode="chip" previewMode="split" app={fakeApp}
+              initialSelectedId="c03"/>
+          </LibraryFrame>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection title="7 · Feedback & edge states" subtitle="The small moments that make the flow feel trustworthy.">
+        <DCArtboard label="copy confirmation toast" width={720} height={280}>
+          <ToastFrame t={t} kind="copy" msg='Copied "React useEffect cleanup pattern"'/>
+        </DCArtboard>
+        <DCArtboard label="pin toast" width={720} height={280}>
+          <ToastFrame t={t} kind="pin" msg="Pinned"/>
+        </DCArtboard>
+        <DCArtboard label="delete toast" width={720} height={280}>
+          <ToastFrame t={t} kind="delete" msg="Deleted · Undo"/>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection title="8 · Density & category display variations" subtitle="Configurable in Tweaks (toolbar).">
+        <DCArtboard label="compact + dot category" width={780} height={520}>
+          <PaletteFrame t={t}>
+            <Palette t={{...t, dense: true}} showLabels categoryMode="dot" app={fakeApp} onClose={()=>{}}/>
+          </PaletteFrame>
+        </DCArtboard>
+        <DCArtboard label="comfy + icon category" width={780} height={520}>
+          <PaletteFrame t={t}>
+            <Palette t={{...t, dense: false}} showLabels categoryMode="icon" app={fakeApp} onClose={()=>{}}/>
+          </PaletteFrame>
+        </DCArtboard>
+        <DCArtboard label="AI labels off — preview-only" width={780} height={520}>
+          <PaletteFrame t={t}>
+            <Palette t={t} showLabels={false} categoryMode="chip" app={fakeApp} onClose={()=>{}}/>
+          </PaletteFrame>
+        </DCArtboard>
+      </DCSection>
+
+      {/* Keyboard map */}
+      <DCSection title="9 · Keyboard map" subtitle="Every action has a key. Power users can work without the mouse; novices can discover from footer hints.">
+        <DCArtboard label="shortcut reference" width={980} height={520}>
+          <KeyboardMap t={t}/>
+        </DCArtboard>
+      </DCSection>
+
+      <div style={{ height: 80 }}/>
+    </DesignCanvas>
+  );
+}
+
+// ─── Frames ─────────────────────────────────────────────
+
+function PaletteFrame({ t, children }) {
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: t.micaBg,
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: `repeating-linear-gradient(
+          90deg, transparent 0 160px,
+          ${t.dark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'} 160px 161px)`,
+        opacity: 0.5,
+      }}/>
+      <div style={{ position: 'absolute', inset: 0 }}>
+        {children}
+      </div>
+      {/* fake taskbar hint */}
+      <div style={{
+        position: 'absolute', bottom: 6, left: '50%',
+        transform: 'translateX(-50%)',
+        width: 180, height: 32,
+        background: t.dark ? 'rgba(28,28,32,0.75)' : 'rgba(255,255,255,0.78)',
+        border: `1px solid ${t.border}`,
+        borderRadius: 8,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+      }}>
+        {[0,1,2,3,4].map(i => (
+          <div key={i} style={{
+            width: 14, height: 14, borderRadius: 3,
+            background: i === 2 ? t.accent : (t.dark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.12)'),
+          }}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LibraryFrame({ t, children }) {
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: t.micaBg,
+      fontFamily: t.fontUi,
+      color: t.fg,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// ─── Tray mock ──────────────────────────────────────────
+function TrayIdle({ t }) {
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: t.micaBg, position: 'relative',
+    }}>
+      <div style={{
+        position: 'absolute', right: 16, bottom: 16,
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '6px 12px',
+        background: t.dark ? 'rgba(28,28,32,0.9)' : 'rgba(255,255,255,0.9)',
+        border: `1px solid ${t.border}`,
+        borderRadius: 10,
+        fontFamily: t.fontUi, fontSize: 11, color: t.fgMuted,
+      }}>
+        <div style={{
+          width: 22, height: 22, borderRadius: 5,
+          background: t.accent, color: '#fff',
+          display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700,
+        }}>✦</div>
+        <span style={{ width: 16, textAlign: 'center' }}>⏶</span>
+        <span style={{ width: 16, textAlign: 'center' }}>⚐</span>
+        <span style={{ marginLeft: 8 }}>9:41 AM</span>
+      </div>
+      <div style={{
+        position: 'absolute', top: 24, left: 24,
+        fontSize: 12, color: t.fgFaint, fontFamily: t.fontMono,
+      }}>Smart Clipboard runs in the system tray. Zero UI until you need it.</div>
+    </div>
+  );
+}
+
+function TrayOpen({ t, app }) {
+  return (
+    <div style={{ width: '100%', height: '100%', background: t.micaBg, position: 'relative', fontFamily: t.fontUi, color: t.fg }}>
+      {/* tray anchor */}
+      <div style={{
+        position: 'absolute', right: 16, bottom: 16,
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '6px 12px',
+        background: t.dark ? 'rgba(28,28,32,0.9)' : 'rgba(255,255,255,0.9)',
+        border: `1px solid ${t.border}`, borderRadius: 10,
+        fontSize: 11, color: t.fgMuted,
+      }}>
+        <div style={{
+          width: 22, height: 22, borderRadius: 5,
+          background: t.accent, color: '#fff',
+          display: 'grid', placeItems: 'center', fontSize: 12, fontWeight: 700,
+          border: `1px solid ${t.accent}`,
+        }}>✦</div>
+        <span style={{ width: 16, textAlign: 'center' }}>⏶</span>
+        <span style={{ width: 16, textAlign: 'center' }}>⚐</span>
+      </div>
+      {/* menu popout */}
+      <div style={{
+        position: 'absolute', right: 30, bottom: 70,
+        width: 280,
+        background: t.bgWindow,
+        border: `1px solid ${t.border}`, borderRadius: 10,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        padding: 6,
+        backdropFilter: 'blur(40px)',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '10px 12px 8px',
+          borderBottom: `1px solid ${t.borderSoft}`, marginBottom: 4,
+        }}>
+          <div style={{
+            width: 28, height: 28, borderRadius: 6,
+            background: t.accent, color: '#fff',
+            display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 14,
+          }}>✦</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12.5, fontWeight: 600 }}>Smart Clipboard</div>
+            <div style={{ fontSize: 10.5, color: t.fgFaint, fontFamily: t.fontMono }}>
+              {app.items.length} items · local
+            </div>
+          </div>
+        </div>
+        {[
+          ['Open palette', '⌘Space'],
+          ['Open library', '⌘⇧V'],
+          [null, null],
+          ['Hide library window', null],
+          ['Launch at startup · ON', null],
+          ['Clear history…', null],
+          [null, null],
+          ['Quit', '⌘Q'],
+        ].map(([l, k], i) => l === null ? (
+          <div key={i} style={{ height: 1, background: t.borderSoft, margin: '4px 2px' }}/>
+        ) : (
+          <div key={i} style={{
+            display: 'flex', alignItems: 'center',
+            padding: '7px 10px', fontSize: 12.5, color: t.fg,
+            borderRadius: 5,
+          }}>
+            <span style={{ flex: 1 }}>{l}</span>
+            {k && <span style={{ color: t.fgFaint, fontSize: 10.5, fontFamily: t.fontMono }}>{k}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ShortcutHint({ t }) {
+  return (
+    <div style={{ width: '100%', height: '100%', background: t.micaBg, position: 'relative', display: 'grid', placeItems: 'center' }}>
+      <div style={{
+        padding: '16px 22px',
+        background: t.bgSurface, color: t.fg,
+        border: `1px solid ${t.border}`, borderRadius: 10,
+        fontSize: 14, fontFamily: t.fontUi,
+        display: 'flex', alignItems: 'center', gap: 12,
+        boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+      }}>
+        <span style={{ color: t.fgMuted }}>Press</span>
+        <Kbd t={t} accent>⌘</Kbd>
+        <Kbd t={t} accent>Space</Kbd>
+        <span style={{ color: t.fgMuted }}>anywhere to open</span>
+      </div>
+    </div>
+  );
+}
+
+function ToastFrame({ t, kind, msg }) {
+  const ICON = { copy: '✓', pin: '★', delete: '⌫', info: '·' };
+  return (
+    <div style={{ width: '100%', height: '100%', background: t.micaBg, display: 'grid', placeItems: 'center' }}>
+      <div style={{
+        padding: '10px 16px',
+        background: 'rgba(30,30,36,0.96)',
+        color: '#fff',
+        borderRadius: 999,
+        fontSize: 12.5, fontWeight: 500,
+        display: 'flex', alignItems: 'center', gap: 10,
+        boxShadow: '0 12px 40px rgba(0,0,0,0.45)',
+        fontFamily: t.fontUi,
+        border: '1px solid rgba(255,255,255,0.08)',
+      }}>
+        <span style={{
+          width: 18, height: 18, borderRadius: 999,
+          background: t.accent, display: 'grid', placeItems: 'center',
+          fontSize: 11, fontWeight: 700,
+        }}>{ICON[kind]}</span>
+        <span>{msg}</span>
+      </div>
+    </div>
+  );
+}
+
+function KeyboardMap({ t }) {
+  const groups = [
+    ['Global', [
+      ['⌘ Space', 'Open palette from anywhere'],
+      ['⌘ ⇧ V', 'Toggle library window'],
+      ['Esc', 'Close palette / clear search'],
+    ]],
+    ['Navigation', [
+      ['↑ / ↓ · J / K', 'Move selection'],
+      ['/', 'Focus search'],
+      ['Tab', 'Toggle fuzzy ↔ semantic (palette)'],
+      ['1 – 9', 'Jump to sidebar filter (library)'],
+    ]],
+    ['Actions', [
+      ['↵', 'Copy + paste · close palette'],
+      ['↵ (in search)', 'Promote fuzzy → semantic'],
+      ['⌘ P', 'Pin / unpin'],
+      ['⌘ ⌫  · ⌫', 'Delete item'],
+      ['E', 'Rename label (library)'],
+      ['⌘ I', 'Toggle preview pane (library)'],
+    ]],
+  ];
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: t.bgWindow, color: t.fg,
+      padding: 28, fontFamily: t.fontUi,
+      display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 28,
+      overflow: 'auto',
+    }}>
+      {groups.map(([heading, rows]) => (
+        <div key={heading}>
+          <div style={{
+            fontSize: 10.5, fontFamily: t.fontMono, color: t.accent,
+            letterSpacing: 1.5, textTransform: 'uppercase',
+            fontWeight: 600, marginBottom: 12,
+            paddingBottom: 8, borderBottom: `1px solid ${t.borderSoft}`,
+          }}>{heading}</div>
+          {rows.map(([k, l], i) => (
+            <div key={i} style={{
+              display: 'flex', alignItems: 'center',
+              padding: '8px 0', gap: 12,
+            }}>
+              <span style={{
+                fontFamily: t.fontMono, fontSize: 11,
+                color: t.fg, minWidth: 90,
+                padding: '3px 8px',
+                background: t.dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                border: `1px solid ${t.borderSoft}`,
+                borderRadius: 5,
+              }}>{k}</span>
+              <span style={{ fontSize: 12.5, color: t.fgMuted, lineHeight: 1.4 }}>{l}</span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<Showcase/>);
+</script>
+</body>
+</html>
