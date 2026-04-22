@@ -1,5 +1,5 @@
 use std::sync::{Arc, RwLock};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, Manager, State};
 use tauri_plugin_store::StoreExt;
 
 use crate::embed::EmbedConfig;
@@ -21,10 +21,7 @@ fn load_from_store(app: &AppHandle) -> EmbedConfig {
 
 fn persist(app: &AppHandle, cfg: &EmbedConfig) -> Result<(), String> {
     let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
-    store.set(
-        KEY,
-        serde_json::to_value(cfg).map_err(|e| e.to_string())?,
-    );
+    store.set(KEY, serde_json::to_value(cfg).map_err(|e| e.to_string())?);
     store.save().map_err(|e| e.to_string())
 }
 
@@ -53,7 +50,6 @@ pub fn set_settings(
     persist(&app, &cfg)?;
 
     if model_changed {
-        // Blow away existing embeddings so we re-embed with the new provider.
         let db = app.state::<Arc<crate::db::Db>>().inner().clone();
         let conn = db.0.lock().map_err(|e| e.to_string())?;
         conn.execute(
@@ -61,13 +57,123 @@ pub fn set_settings(
             [],
         )
         .map_err(|e| e.to_string())?;
+        let pending: i64 = conn
+            .query_row("SELECT COUNT(*) FROM items WHERE deleted = 0", [], |r| {
+                r.get(0)
+            })
+            .unwrap_or(0);
+        let _ = app.emit("embed-backfill-started", pending);
     }
 
-    // Kick embed queue to backfill with new config.
     crate::embed_queue::kick(&app);
-    // If the user just pasted an Anthropic key, backfill labels for existing items.
     if anthropic_key_gained {
         crate::label_queue::kick(&app);
     }
     Ok(())
+}
+
+const HINT_KEY: &str = "hintDismissed";
+const SHORTCUT_KEY: &str = "paletteShortcut";
+
+#[tauri::command]
+pub fn get_hint_dismissed(app: AppHandle) -> bool {
+    let Ok(store) = app.store(STORE_PATH) else {
+        return false;
+    };
+    store
+        .get(HINT_KEY)
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false)
+}
+
+#[tauri::command]
+pub fn set_hint_dismissed(app: AppHandle, dismissed: bool) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    store.set(HINT_KEY, serde_json::json!(dismissed));
+    store.save().map_err(|e| e.to_string())
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, PartialEq)]
+pub struct ShortcutConfig {
+    pub modifiers: u32,
+    pub key: String,
+}
+
+impl Default for ShortcutConfig {
+    fn default() -> Self {
+        Self {
+            modifiers: 6,
+            key: "KeyV".into(),
+        }
+    }
+}
+
+fn load_shortcut(app: &AppHandle) -> ShortcutConfig {
+    let Ok(store) = app.store(STORE_PATH) else {
+        return ShortcutConfig::default();
+    };
+    store
+        .get(SHORTCUT_KEY)
+        .and_then(|v| serde_json::from_value::<ShortcutConfig>(v).ok())
+        .unwrap_or_default()
+}
+
+#[tauri::command]
+pub fn get_autostart(app: AppHandle) -> bool {
+    use tauri_plugin_autostart::ManagerExt;
+    app.autolaunch().is_enabled().unwrap_or(false)
+}
+
+#[tauri::command]
+pub fn set_autostart(app: AppHandle, enabled: bool) -> Result<(), String> {
+    use tauri_plugin_autostart::ManagerExt;
+    let mgr = app.autolaunch();
+    if enabled {
+        mgr.enable()
+            .map_err(|e: tauri_plugin_autostart::Error| e.to_string())
+    } else {
+        mgr.disable()
+            .map_err(|e: tauri_plugin_autostart::Error| e.to_string())
+    }
+}
+
+fn persist_shortcut(app: &AppHandle, sc: &ShortcutConfig) -> Result<(), String> {
+    let store = app.store(STORE_PATH).map_err(|e| e.to_string())?;
+    store.set(
+        SHORTCUT_KEY,
+        serde_json::to_value(sc).map_err(|e| e.to_string())?,
+    );
+    store.save().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_shortcut(app: AppHandle) -> ShortcutConfig {
+    load_shortcut(&app)
+}
+
+#[tauri::command]
+pub fn set_shortcut(app: AppHandle, sc: ShortcutConfig) -> Result<(), String> {
+    use tauri_plugin_global_shortcut::GlobalShortcutExt;
+
+    let shortcut = crate::build_shortcut(&sc);
+    if let Some(lock) = crate::SHORTCUT.get() {
+        if let Ok(mut guard) = lock.lock() {
+            if let Some(old) = guard.take() {
+                let _ = app.global_shortcut().unregister(old);
+            }
+        }
+    }
+    app.global_shortcut()
+        .register(shortcut.clone())
+        .map_err(|e| e.to_string())?;
+    if let Some(lock) = crate::SHORTCUT.get() {
+        if let Ok(mut guard) = lock.lock() {
+            guard.replace(shortcut);
+        }
+    }
+    persist_shortcut(&app, &sc)
+}
+
+pub fn get_loaded_shortcut(app: &AppHandle) -> ShortcutConfig {
+    load_shortcut(app)
 }
