@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { AIPanel } from "./components/AIPanel";
 import { KeyboardMap } from "./components/KeyboardMap";
 import { ShortcutHint } from "./components/ShortcutHint";
@@ -20,12 +21,36 @@ const DEFAULT_TWEAKS: Tweaks = {
   previewMode: "split",
 };
 
+async function loadHintDismissed(): Promise<boolean> {
+  try {
+    return await invoke<boolean>("get_hint_dismissed");
+  } catch {
+    return false;
+  }
+}
+
+async function loadShortcut(): Promise<{ modifiers: number; key: string } | null> {
+  try {
+    return await invoke<{ modifiers: number; key: string }>("get_shortcut");
+  } catch {
+    return null;
+  }
+}
+
+async function saveHintDismissed(dismissed: boolean) {
+  try {
+    await invoke("set_hint_dismissed", { dismissed });
+  } catch {
+    // non-critical
+  }
+}
+
 function App() {
   const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
   const [tweaksOpen, setTweaksOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [keymapOpen, setKeymapOpen] = useState(false);
-  const [hintDismissed, setHintDismissed] = useState(false);
+  const [hintDismissed, setHintDismissedState] = useState(false);
   const app = useAppState();
   const { settings, save: saveSettings } = useSettings();
 
@@ -49,6 +74,19 @@ function App() {
   const anthropicEnabled = settings.anthropic_api_key.trim().length > 0;
 
   useEffect(() => {
+    void loadHintDismissed().then(setHintDismissedState);
+    void loadShortcut().then((sc) => {
+      if (sc) {
+        const label =
+          sc.modifiers === 7 && sc.key === "Space"
+            ? "Ctrl+Space"
+            : "Ctrl+Shift+V";
+        setTweaks((prev) => ({ ...prev, paletteShortcut: label }));
+      }
+    });
+    void invoke<boolean>("get_autostart")
+      .then((enabled) => setTweaks((prev) => ({ ...prev, autostart: enabled })))
+      .catch(() => {});
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "?") {
         const target = e.target as HTMLElement | null;
@@ -91,8 +129,35 @@ function App() {
         anthropicEnabled={anthropicEnabled}
       />
 
+      {app.backfill && app.backfill.remaining > 0 && (
+        <div
+          style={{
+            position: "fixed",
+            top: 8,
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "4px 12px",
+            fontFamily: t.fontMono,
+            fontSize: 10.5,
+            color: t.accentInk,
+            background: t.accentSoft,
+            border: `1px solid ${t.accentSoft}`,
+            borderRadius: 5,
+            zIndex: 300,
+          }}
+        >
+          Embedding {app.backfill.remaining} item{app.backfill.remaining === 1 ? "" : "s"}…
+        </div>
+      )}
+
       {!hintDismissed && (
-        <ShortcutHint t={t} onDismiss={() => setHintDismissed(true)} />
+        <ShortcutHint
+          t={t}
+          onDismiss={() => {
+            setHintDismissedState(true);
+            void saveHintDismissed(true);
+          }}
+        />
       )}
 
       <button
