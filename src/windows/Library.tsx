@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { listen } from "@tauri-apps/api/event";
 import { CATEGORIES, CATEGORY_META } from "../lib/category";
 import {
   groupByTime,
@@ -302,6 +303,35 @@ export function Library({
   useEffect(() => {
     setLocalPreview(previewMode);
   }, [previewMode]);
+
+  // Tray and other backend triggers can ask the library to jump to a specific
+  // filter (e.g. "Show Pinned"). We accept any known Filter string; unknown
+  // payloads are ignored so future expansion can't crash the UI.
+  useEffect(() => {
+    const unlisten = listen<string>("library-filter", (ev) => {
+      const payload = ev.payload;
+      const allowed: Filter[] = [
+        "all",
+        "pinned",
+        "code",
+        "url",
+        "email",
+        "phone",
+        "color",
+        "path",
+        "text",
+        "address",
+        "number",
+      ];
+      if (allowed.includes(payload as Filter)) {
+        setFilter(payload as Filter);
+        setQuery("");
+      }
+    });
+    return () => {
+      unlisten.then((f) => f()).catch(() => {});
+    };
+  }, []);
 
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
