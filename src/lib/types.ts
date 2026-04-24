@@ -45,6 +45,8 @@ export interface Tweaks {
   showLabels: boolean;
   fontPair: FontPair;
   previewMode: PreviewMode;
+  paletteShortcut?: string;
+  autostart?: boolean;
 }
 
 export interface Theme {

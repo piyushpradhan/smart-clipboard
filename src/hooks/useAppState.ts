@@ -5,9 +5,15 @@ import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { truncate } from "../lib/time";
 import type { ClipItem, Toast, ToastKind } from "../lib/types";
 
+export interface BackfillState {
+  remaining: number;
+  total: number;
+}
+
 export interface AppState {
   items: ClipItem[];
   toast: Toast | null;
+  backfill: BackfillState | null;
   paletteOpen: boolean;
   setPaletteOpen: (v: boolean) => void;
   libraryOpen: boolean;
@@ -25,10 +31,8 @@ let toastSeq = 0;
 
 async function fetchItems(): Promise<ClipItem[]> {
   try {
-    const items = await invoke<ClipItem[]>("list_items");
-    return items;
+    return await invoke<ClipItem[]>("list_items");
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error("list_items failed", err);
     return [];
   }
@@ -37,8 +41,11 @@ async function fetchItems(): Promise<ClipItem[]> {
 export function useAppState(): AppState {
   const [items, setItems] = useState<ClipItem[]>([]);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [backfill, setBackfill] = useState<BackfillState | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(true);
+  const backfillCount = useRef(0);
+  const backfillTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const itemsRef = useRef<ClipItem[]>([]);
   itemsRef.current = items;
 
@@ -50,23 +57,30 @@ export function useAppState(): AppState {
   useEffect(() => {
     void refresh();
     const unlisten = Promise.all([
-      listen("clip-added", () => {
-        void refresh();
+      listen("clip-added", () => void refresh()),
+      listen("clip-swept", () => void refresh()),
+      listen("clip-labeled", () => void refresh()),
+      listen<number>("embed-backfill-started", (ev) => {
+        const total = ev.payload;
+        backfillCount.current = total;
+        setBackfill({ remaining: total, total });
+        if (backfillTimer.current) clearTimeout(backfillTimer.current);
+        backfillTimer.current = setTimeout(() => {
+          backfillCount.current = 0;
+          setBackfill(null);
+        }, 30000);
       }),
-      listen("clip-swept", () => {
-        void refresh();
-      }),
-      // Fires when the Anthropic worker upgrades a preview-fallback label to
-      // an AI-generated one. Refresh so the row swaps from "pending" style
-      // to final.
-      listen("clip-labeled", () => {
-        void refresh();
+      listen<number>("clip-embedded", () => {
+        backfillCount.current = Math.max(0, backfillCount.current - 1);
+        setBackfill({ remaining: backfillCount.current, total: backfillCount.current });
+        if (backfillCount.current === 0) {
+          if (backfillTimer.current) clearTimeout(backfillTimer.current);
+          backfillTimer.current = setTimeout(() => setBackfill(null), 3000);
+        }
       }),
     ]);
     return () => {
-      unlisten
-        .then((fns) => fns.forEach((f) => f()))
-        .catch(() => {});
+      unlisten.then((fns) => fns.forEach((f) => f())).catch(() => {});
     };
   }, [refresh]);
 
@@ -85,10 +99,7 @@ export function useAppState(): AppState {
     (id: string) => {
       const it = itemsRef.current.find((i) => i.id === id);
       if (!it) return;
-      writeText(it.content).catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error("clipboard write failed", err);
-      });
+      writeText(it.content).catch((err) => console.error("clipboard write failed", err));
       invoke("touch_item", { id }).then(
         () => void refresh(),
         (err) => console.error("touch_item failed", err),
@@ -146,7 +157,6 @@ export function useAppState(): AppState {
       try {
         return await invoke<ClipItem[]>("search_semantic", { query, limit });
       } catch (err) {
-        // eslint-disable-next-line no-console
         console.error("search_semantic failed", err);
         throw err;
       }
@@ -154,11 +164,10 @@ export function useAppState(): AppState {
     [],
   );
 
-  const visible = useMemo(() => items.filter((i) => !i.deleted), [items]);
-
   return {
-    items: visible,
+    items: useMemo(() => items.filter((i) => !i.deleted), [items]),
     toast,
+    backfill,
     paletteOpen,
     setPaletteOpen,
     libraryOpen,
