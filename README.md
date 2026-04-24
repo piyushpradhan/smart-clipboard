@@ -91,15 +91,57 @@ If neither is configured, Smart Clipboard runs fuzzy-only with content previews 
 
 ## Build from source
 
-**Prerequisites:** Node 18+, pnpm or npm, Rust stable, and the Tauri v2 prerequisites for Windows (Visual Studio Build Tools + WebView2).
+**Prerequisites (one-time, per machine):** Node 18+, Rust stable, and the Tauri v2 toolchain for your OS:
 
-```powershell
-npm install
-npm run tauri dev       # development, hot-reloads both sides
-npm run tauri build     # release build → src-tauri\target\release\bundle\
+- **Windows** — Visual Studio Build Tools + WebView2 Runtime.
+- **macOS** — Xcode Command Line Tools.
+- **Linux** — see [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/#linux).
+
+### The dead-simple path
+
+macOS / Linux / Windows-with-make:
+
+```sh
+make install        # one-time: installs js deps
+make dev            # hot-reload dev server
+make build          # release installers for your host OS
+make dist           # clean build + copy artifacts into ./dist-installers/
 ```
 
-The build outputs an NSIS installer (`.exe`) and an MSI in `src-tauri\target\release\bundle\`.
+Windows without make — use the PowerShell wrapper instead (same targets):
+
+```powershell
+.\build.ps1 install
+.\build.ps1 dev
+.\build.ps1 build
+.\build.ps1 dist
+```
+
+`make build` picks the right installer format automatically:
+
+| Host | Output |
+|---|---|
+| Windows | `.msi` + `.exe` (NSIS) in `src-tauri/target/release/bundle/{msi,nsis}/` |
+| macOS | `.dmg` + `.app` in `src-tauri/target/release/bundle/{dmg,macos}/` |
+| Linux | `.AppImage` + `.deb` in `src-tauri/target/release/bundle/{appimage,deb}/` |
+
+### All three platforms in one shot (GitHub Actions)
+
+Push a `v*` tag and [`.github/workflows/release.yml`](./.github/workflows/release.yml) builds Windows, macOS, and Linux installers in parallel and attaches them to a draft GitHub Release:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+You can also trigger the workflow manually from the Actions tab — artifacts (`smart-clipboard-windows`, `-macos`, `-linux`) will be attached to the run without creating a release.
+
+### Raw commands (if you dislike make)
+
+```sh
+npm install
+npm run tauri dev
+npm run tauri build
+```
 
 ## Privacy
 
