@@ -101,8 +101,9 @@ pub struct ShortcutConfig {
 
 impl Default for ShortcutConfig {
     fn default() -> Self {
+        // keyboard-types::Modifiers: CONTROL=0x08, SHIFT=0x200 → Ctrl+Shift = 0x208.
         Self {
-            modifiers: 6,
+            modifiers: 0x208,
             key: "KeyV".into(),
         }
     }
@@ -112,10 +113,19 @@ fn load_shortcut(app: &AppHandle) -> ShortcutConfig {
     let Ok(store) = app.store(STORE_PATH) else {
         return ShortcutConfig::default();
     };
-    store
+    let cfg = store
         .get(SHORTCUT_KEY)
         .and_then(|v| serde_json::from_value::<ShortcutConfig>(v).ok())
-        .unwrap_or_default()
+        .unwrap_or_default();
+    // Earlier builds persisted nonsense modifier bitmasks (6, 7) that don't
+    // contain any real modifier key — those registrations bound to the bare
+    // key. If the stored mask has no Ctrl/Shift/Alt/Meta bit set, treat the
+    // stored value as corrupt and return the default.
+    const USEFUL: u32 = 0x08 /* CONTROL */ | 0x200 /* SHIFT */ | 0x01 /* ALT */ | 0x40 /* META */;
+    if cfg.modifiers & USEFUL == 0 {
+        return ShortcutConfig::default();
+    }
+    cfg
 }
 
 #[tauri::command]

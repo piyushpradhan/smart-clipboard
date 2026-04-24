@@ -11,10 +11,11 @@ mod watcher;
 use std::sync::{Arc, Mutex, OnceLock};
 use std::str::FromStr;
 use tauri::{
-    menu::{Menu, MenuItem},
+    menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Emitter, Manager, WindowEvent,
 };
+use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{
     Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState,
 };
@@ -25,7 +26,20 @@ use crate::settings::{get_loaded_shortcut, ShortcutConfig};
 pub static SHORTCUT: OnceLock<Arc<Mutex<Option<Shortcut>>>> = OnceLock::new();
 
 pub fn build_shortcut(sc: &ShortcutConfig) -> Shortcut {
-    let mods = Modifiers::from_bits(sc.modifiers as u32).unwrap_or(Modifiers::CONTROL | Modifiers::SHIFT);
+    // Legacy stores may have persisted bogus bitmasks from earlier builds
+    // (e.g. `6` which is ALT_GRAPH|CAPS_LOCK). Detect anything that doesn't
+    // include at least one of the "normal" modifier keys and fall back to
+    // Ctrl+Shift so the shortcut stays usable instead of binding to a bare key.
+    let raw = sc.modifiers as u32;
+    let useful = Modifiers::CONTROL.bits()
+        | Modifiers::SHIFT.bits()
+        | Modifiers::ALT.bits()
+        | Modifiers::META.bits();
+    let mods = if raw & useful == 0 {
+        Modifiers::CONTROL | Modifiers::SHIFT
+    } else {
+        Modifiers::from_bits_truncate(raw)
+    };
     let code = Code::from_str(&sc.key).unwrap_or(Code::KeyV);
     Shortcut::new(Some(mods), code)
 }
@@ -114,10 +128,41 @@ pub fn run() {
                 .map_err(|e| e.to_string())?
                 .replace(shortcut);
 
-            let show_i = MenuItem::with_id(app, "show", "Open Library", true, None::<&str>)?;
-            let hide_i = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
+            let open_library_i =
+                MenuItem::with_id(app, "show", "Open Library", true, None::<&str>)?;
+            let open_palette_i =
+                MenuItem::with_id(app, "palette", "Open Palette", true, None::<&str>)?;
+            let show_pinned_i =
+                MenuItem::with_id(app, "show_pinned", "Show Pinned", true, None::<&str>)?;
+            let hide_i = MenuItem::with_id(app, "hide", "Hide Library", true, None::<&str>)?;
+            let sep_a = PredefinedMenuItem::separator(app)?;
+            let autostart_enabled = app.autolaunch().is_enabled().unwrap_or(false);
+            let autostart_i = CheckMenuItem::with_id(
+                app,
+                "autostart",
+                "Launch at Startup",
+                true,
+                autostart_enabled,
+                None::<&str>,
+            )?;
+            let clear_i =
+                MenuItem::with_id(app, "clear", "Clear History", true, None::<&str>)?;
+            let sep_b = PredefinedMenuItem::separator(app)?;
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_i, &hide_i, &quit_i])?;
+            let menu = Menu::with_items(
+                app,
+                &[
+                    &open_library_i,
+                    &open_palette_i,
+                    &show_pinned_i,
+                    &hide_i,
+                    &sep_a,
+                    &autostart_i,
+                    &clear_i,
+                    &sep_b,
+                    &quit_i,
+                ],
+            )?;
 
             let _tray = TrayIconBuilder::with_id("main-tray")
                 .tooltip("Smart Clipboard")
@@ -130,12 +175,53 @@ pub fn run() {
                             let _ = w.show();
                             let _ = w.unminimize();
                             let _ = w.set_focus();
+                            let _ = app.emit("library-filter", "all");
+                        }
+                    }
+                    "palette" => {
+                        if let Some(w) = app.get_webview_window("palette") {
+                            let _ = w.center();
+                            let _ = w.show();
+                            let _ = w.set_focus();
+                            let _ = app.emit("palette-shown", ());
+                        }
+                    }
+                    "show_pinned" => {
+                        if let Some(w) = app.get_webview_window("library") {
+                            let _ = w.show();
+                            let _ = w.unminimize();
+                            let _ = w.set_focus();
+                            let _ = app.emit("library-filter", "pinned");
                         }
                     }
                     "hide" => {
                         if let Some(w) = app.get_webview_window("library") {
                             let _ = w.hide();
                         }
+                    }
+                    "autostart" => {
+                        let mgr = app.autolaunch();
+                        let enabled = mgr.is_enabled().unwrap_or(false);
+                        if enabled {
+                            let _ = mgr.disable();
+                        } else {
+                            let _ = mgr.enable();
+                        }
+                        let _ = app.emit(
+                            "autostart-changed",
+                            mgr.is_enabled().unwrap_or(false),
+                        );
+                    }
+                    "clear" => {
+                        if let Some(db) = app.try_state::<Arc<crate::db::Db>>() {
+                            if let Ok(conn) = db.0.lock() {
+                                let _ = conn.execute(
+                                    "DELETE FROM items WHERE pinned = 0",
+                                    [],
+                                );
+                            }
+                        }
+                        let _ = app.emit("clip-swept", 0u32);
                     }
                     "quit" => {
                         app.exit(0);
