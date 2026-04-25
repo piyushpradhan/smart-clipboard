@@ -29,6 +29,8 @@ The entire "shortcut → type → paste" loop is under five seconds. No cloud, n
 
 ## Install
 
+> **Currently Windows-only on the Releases page.** macOS and Linux builds will be added in a future release — until then, build them yourself from source (see below).
+
 Download the latest `.msi` or `.exe` from [Releases](../../releases) and run it. The app installs to `%LOCALAPPDATA%\Programs\Smart Clipboard` and registers a tray icon; the main window opens on first launch.
 
 ## Keyboard reference
