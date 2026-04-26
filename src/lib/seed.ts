@@ -34,9 +34,9 @@ export const SEED_ITEMS: ClipItem[] = [
     source: "Notion — Launch draft",
     minutesAgo: 38,
     content:
-      "Smart Clipboard is free for your first 100 items. Upgrade to Pro for unlimited history, AI labels, and semantic search — $4/month or $29 one-time. No subscriptions for system utilities if you don't want one.",
+      "Recall is free for your first 100 items. Upgrade to Pro for unlimited history, AI labels, and semantic search — $4/month or $29 one-time. No subscriptions for system utilities if you don't want one.",
     preview:
-      "Smart Clipboard is free for your first 100 items. Upgrade to Pro for…",
+      "Recall is free for your first 100 items. Upgrade to Pro for…",
   },
   {
     id: "c04",

@@ -215,7 +215,7 @@ pub fn run() {
             )?;
 
             let _tray = TrayIconBuilder::with_id("main-tray")
-                .tooltip("Smart Clipboard")
+                .tooltip("Recall")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .show_menu_on_left_click(false)

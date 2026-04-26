@@ -1,4 +1,4 @@
-# Smart Clipboard — build targets
+# Recall — build targets
 #
 # One-command builds that produce installers for the host OS:
 #   - Windows → .msi + .exe (NSIS) in src-tauri/target/release/bundle/{msi,nsis}/

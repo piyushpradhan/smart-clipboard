@@ -533,7 +533,7 @@ export function Library({
             data-tauri-drag-region
             style={{ fontSize: 12.5, color: t.fgMuted, fontWeight: 500 }}
           >
-            Smart Clipboard
+            Recall
           </div>
         </div>
         <div style={{ display: "flex", height: "100%" }}>
