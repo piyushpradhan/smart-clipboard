@@ -8,8 +8,7 @@ const GROUPS: [string, [string, string][]][] = [
   [
     "Global",
     [
-      ["Ctrl Space", "Open palette from anywhere"],
-      ["Ctrl Shift V", "Toggle library window"],
+      ["Ctrl Shift Space", "Open palette from anywhere"],
       ["Esc", "Close palette / clear search"],
     ],
   ],

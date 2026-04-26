@@ -3,7 +3,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
 import { Palette } from "./Palette";
 import { useAppState } from "../hooks/useAppState";
-import { useSettings } from "../hooks/useSettings";
+import { isSemanticAvailable, useSettings } from "../hooks/useSettings";
 import { buildTheme } from "../lib/theme";
 import type { Tweaks } from "../lib/types";
 
@@ -22,12 +22,7 @@ export function PaletteWindow() {
   const app = useAppState();
   const { settings } = useSettings();
 
-  const semanticAvailable =
-    settings.provider !== "disabled" &&
-    ((settings.provider === "openai" &&
-      settings.openai_api_key.trim().length > 0) ||
-      (settings.provider === "ollama" &&
-        settings.ollama_url.trim().length > 0));
+  const semanticAvailable = isSemanticAvailable(settings);
 
   const t = useMemo(
     () =>

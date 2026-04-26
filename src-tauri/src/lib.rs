@@ -5,6 +5,7 @@ mod embed;
 mod embed_queue;
 mod label;
 mod label_queue;
+mod local_embed;
 mod settings;
 mod watcher;
 
@@ -24,6 +25,56 @@ use crate::db::Db;
 use crate::settings::{get_loaded_shortcut, ShortcutConfig};
 
 pub static SHORTCUT: OnceLock<Arc<Mutex<Option<Shortcut>>>> = OnceLock::new();
+
+/// Toggle the palette window. Used by both the global hotkey and the
+/// CLI flag (`--palette`) so the two paths share identical behaviour.
+fn toggle_palette(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("palette") {
+        let visible = w.is_visible().unwrap_or(false);
+        if visible {
+            let _ = w.hide();
+        } else {
+            let _ = w.center();
+            let _ = w.show();
+            let _ = w.set_focus();
+            let _ = app.emit("palette-shown", ());
+        }
+    }
+}
+
+/// Bring the library window forward. Used when the binary is invoked
+/// without flags — gives Wayland users a deterministic "click this in
+/// my DE settings to open the app" entry point even when the global
+/// shortcut isn't available.
+fn focus_library(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("library") {
+        let _ = w.show();
+        let _ = w.unminimize();
+        let _ = w.set_focus();
+    }
+}
+
+/// Dispatch CLI args. `is_second_instance` is true when invoked via the
+/// single-instance plugin (a second `smart-clipboard ...` call routed to
+/// the running app). Honoured flags:
+///   --palette   toggle the palette
+///   --library   focus the library
+///   (bare)      focus the library on second instance; no-op on first
+fn handle_cli_args(app: &tauri::AppHandle, args: &[String], is_second_instance: bool) {
+    if args.iter().any(|a| a == "--palette") {
+        toggle_palette(app);
+        return;
+    }
+    if args.iter().any(|a| a == "--library") {
+        focus_library(app);
+        return;
+    }
+    // Bare second-instance invocation: someone hit the launcher again.
+    // Bring the library forward so it doesn't feel like a no-op.
+    if is_second_instance {
+        focus_library(app);
+    }
+}
 
 pub fn build_shortcut(sc: &ShortcutConfig) -> Shortcut {
     // Legacy stores may have persisted bogus bitmasks from earlier builds
@@ -47,6 +98,14 @@ pub fn build_shortcut(sc: &ShortcutConfig) -> Shortcut {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Single-instance must be registered first so a second `smart-clipboard`
+        // invocation hands its args to the running app instead of starting
+        // a new process. This is the Linux/Wayland fallback for global
+        // hotkeys: users bind their DE's keyboard shortcut to
+        // `smart-clipboard --palette` and the running app handles it.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            handle_cli_args(app, &args, true);
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_store::Builder::default().build())
@@ -65,17 +124,7 @@ pub fn run() {
                                 }
                             }
                         }
-                        if let Some(w) = app.get_webview_window("palette") {
-                            let visible = w.is_visible().unwrap_or(false);
-                            if visible {
-                                let _ = w.hide();
-                            } else {
-                                let _ = w.center();
-                                let _ = w.show();
-                                let _ = w.set_focus();
-                                let _ = app.emit("palette-shown", ());
-                            }
-                        }
+                        toggle_palette(app);
                     }
                 })
                 .build(),
@@ -111,6 +160,7 @@ pub fn run() {
 
             let settings_state = settings::init(app.handle());
             app.manage(settings::SettingsState(settings_state));
+            app.manage(local_embed::LocalState::new());
 
             watcher::spawn(app.handle().clone());
             commands::spawn_sweeper(app.handle().clone());
@@ -272,6 +322,13 @@ pub fn run() {
                     _ => {}
                 });
             }
+
+            // Cold-start with `--palette` should also open the palette,
+            // so a Wayland user pressing their DE shortcut for the first
+            // time (before the app is running) gets the palette instead
+            // of just the library window.
+            let cli_args: Vec<String> = std::env::args().collect();
+            handle_cli_args(app.handle(), &cli_args, false);
 
             Ok(())
         })

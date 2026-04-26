@@ -169,10 +169,13 @@ pub fn clear_history(db: State<'_, Arc<Db>>) -> Result<(), String> {
 pub async fn search_semantic(
     query: String,
     limit: Option<usize>,
+    app: tauri::AppHandle,
     db: State<'_, Arc<Db>>,
     settings: State<'_, crate::settings::SettingsState>,
+    local: State<'_, crate::local_embed::LocalState>,
 ) -> Result<Vec<ClipItem>, String> {
-    use crate::embed::{self, EmbedConfig, EmbedTask};
+    use crate::embed::{self, EmbedConfig, EmbedTask, Provider};
+    use crate::local_embed;
 
     let cfg: EmbedConfig = settings.0.read().map_err(|e| e.to_string())?.clone();
     if !cfg.is_active() {
@@ -185,11 +188,22 @@ pub async fn search_semantic(
     let limit = limit.unwrap_or(20);
 
     // Embed the query outside the DB lock.
-    let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .build()
-        .map_err(|e| e.to_string())?;
-    let q_vec = embed::embed(&cfg, &client, &q_trimmed, EmbedTask::Query).await?;
+    let q_vec = if matches!(cfg.provider, Provider::Local) {
+        local_embed::embed_local(
+            local.inner(),
+            local_embed::cache_dir(&app),
+            &cfg.local_model,
+            &q_trimmed,
+            EmbedTask::Query,
+        )
+        .await?
+    } else {
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .build()
+            .map_err(|e| e.to_string())?;
+        embed::embed(&cfg, &client, &q_trimmed, EmbedTask::Query).await?
+    };
 
     // Pool A — vector candidates. Score every embedded item by cosine on
     // the L2-normalised vectors, filter out obvious noise, keep the top K.
