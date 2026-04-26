@@ -8,7 +8,8 @@ use rusqlite::params;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::db::Db;
-use crate::embed::{self, EmbedConfig, EmbedTask};
+use crate::embed::{self, EmbedConfig, EmbedTask, Provider};
+use crate::local_embed::{self, LocalState};
 use crate::settings::SettingsState;
 
 /// Upper bound on characters we embed per item. Modern embedding models
@@ -57,8 +58,21 @@ pub fn spawn(app: AppHandle) {
             }
 
             for (id, text) in pending {
-                let result =
-                    runtime.block_on(embed::embed(&cfg, &client, &text, EmbedTask::Document));
+                let result = runtime.block_on(async {
+                    if matches!(cfg.provider, Provider::Local) {
+                        let state = handle.state::<LocalState>();
+                        local_embed::embed_local(
+                            state.inner(),
+                            local_embed::cache_dir(&handle),
+                            &cfg.local_model,
+                            &text,
+                            EmbedTask::Document,
+                        )
+                        .await
+                    } else {
+                        embed::embed(&cfg, &client, &text, EmbedTask::Document).await
+                    }
+                });
                 match result {
                     Ok(embedding) => {
                         store_embedding(&handle, id, &embedding, &cfg.model_id());

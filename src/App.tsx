@@ -6,7 +6,7 @@ import { ShortcutHint } from "./components/ShortcutHint";
 import { Toast } from "./components/Toast";
 import { TweaksPanel } from "./components/TweaksPanel";
 import { useAppState } from "./hooks/useAppState";
-import { useSettings } from "./hooks/useSettings";
+import { isSemanticAvailable, useSettings } from "./hooks/useSettings";
 import { buildTheme } from "./lib/theme";
 import type { Tweaks } from "./lib/types";
 import { Library } from "./windows/Library";
@@ -45,6 +45,21 @@ async function saveHintDismissed(dismissed: boolean) {
   }
 }
 
+const MOD_CONTROL = 0x08;
+const MOD_SHIFT = 0x200;
+const MOD_ALT = 0x01;
+const MOD_META = 0x40;
+
+function labelForShortcut(modifiers: number, key: string): string {
+  const parts: string[] = [];
+  if (modifiers & MOD_CONTROL) parts.push("Ctrl");
+  if (modifiers & MOD_ALT) parts.push("Alt");
+  if (modifiers & MOD_SHIFT) parts.push("Shift");
+  if (modifiers & MOD_META) parts.push("Meta");
+  parts.push(key.startsWith("Key") ? key.slice(3) : key);
+  return parts.join("+");
+}
+
 function App() {
   const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
   const [tweaksOpen, setTweaksOpen] = useState(false);
@@ -65,22 +80,14 @@ function App() {
     [tweaks.theme, tweaks.accentHue, tweaks.density, tweaks.fontPair],
   );
 
-  const semanticAvailable =
-    settings.provider !== "disabled" &&
-    ((settings.provider === "openai" &&
-      settings.openai_api_key.trim().length > 0) ||
-      (settings.provider === "ollama" &&
-        settings.ollama_url.trim().length > 0));
+  const semanticAvailable = isSemanticAvailable(settings);
   const anthropicEnabled = settings.anthropic_api_key.trim().length > 0;
 
   useEffect(() => {
     void loadHintDismissed().then(setHintDismissedState);
     void loadShortcut().then((sc) => {
       if (sc) {
-        const label =
-          sc.modifiers === 7 && sc.key === "Space"
-            ? "Ctrl+Space"
-            : "Ctrl+Shift+V";
+        const label = labelForShortcut(sc.modifiers, sc.key);
         setTweaks((prev) => ({ ...prev, paletteShortcut: label }));
       }
     });

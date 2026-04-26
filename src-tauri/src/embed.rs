@@ -4,6 +4,9 @@ use serde_json::json;
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Provider {
+    /// Bundled ONNX embedding model running entirely on the user's machine.
+    /// Default — no API key, no network, works offline after first download.
+    Local,
     Openai,
     Ollama,
     Disabled,
@@ -21,6 +24,8 @@ pub enum EmbedTask {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmbedConfig {
     pub provider: Provider,
+    #[serde(default = "default_local_model")]
+    pub local_model: String,
     pub openai_api_key: String,
     pub openai_model: String,
     pub ollama_url: String,
@@ -28,10 +33,15 @@ pub struct EmbedConfig {
     pub anthropic_api_key: String,
 }
 
+fn default_local_model() -> String {
+    "bge-small-en-v1.5".into()
+}
+
 impl Default for EmbedConfig {
     fn default() -> Self {
         Self {
-            provider: Provider::Disabled,
+            provider: Provider::Local,
+            local_model: default_local_model(),
             openai_api_key: String::new(),
             openai_model: "text-embedding-3-small".into(),
             ollama_url: "http://localhost:11434".into(),
@@ -45,6 +55,8 @@ impl EmbedConfig {
     pub fn is_active(&self) -> bool {
         match self.provider {
             Provider::Disabled => false,
+            // Local is always active — the model loads (or downloads) on demand.
+            Provider::Local => true,
             Provider::Openai => !self.openai_api_key.trim().is_empty(),
             Provider::Ollama => !self.ollama_url.trim().is_empty(),
         }
@@ -56,6 +68,7 @@ impl EmbedConfig {
         const FMT: &str = "v2";
         match self.provider {
             Provider::Disabled => "disabled".into(),
+            Provider::Local => format!("local:{}:{FMT}", self.local_model),
             Provider::Openai => format!("openai:{}:{FMT}", self.openai_model),
             Provider::Ollama => format!("ollama:{}:{FMT}", self.ollama_model),
         }
@@ -70,6 +83,10 @@ pub async fn embed(
 ) -> Result<Vec<f32>, String> {
     match cfg.provider {
         Provider::Disabled => Err("embedding disabled".into()),
+        // Local is dispatched through `local_embed::embed_local` because it
+        // needs the held ONNX model and the app data dir — kept out of this
+        // path so the network providers stay zero-state.
+        Provider::Local => Err("local embedding handled separately".into()),
         Provider::Openai => embed_openai(cfg, client, text).await,
         Provider::Ollama => embed_ollama(cfg, client, text, task).await,
     }
@@ -154,7 +171,7 @@ async fn embed_ollama(
 }
 
 /// L2-normalize so cosine = dot product.
-fn normalize(mut v: Vec<f32>) -> Vec<f32> {
+pub fn normalize(mut v: Vec<f32>) -> Vec<f32> {
     let norm: f32 = v.iter().map(|x| x * x).sum::<f32>().sqrt();
     if norm > 0.0 {
         for x in &mut v {

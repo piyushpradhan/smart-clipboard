@@ -50,6 +50,11 @@ pub fn set_settings(
     persist(&app, &cfg)?;
 
     if model_changed {
+        // Drop the loaded fastembed instance so the next embed reloads
+        // for the new model (or different provider entirely).
+        if let Some(local) = app.try_state::<crate::local_embed::LocalState>() {
+            local.invalidate();
+        }
         let db = app.state::<Arc<crate::db::Db>>().inner().clone();
         let conn = db.0.lock().map_err(|e| e.to_string())?;
         conn.execute(
@@ -101,10 +106,14 @@ pub struct ShortcutConfig {
 
 impl Default for ShortcutConfig {
     fn default() -> Self {
+        // Ctrl+Shift+Space — chosen for cross-OS safety. Ctrl+Shift+V (the
+        // historical pick) collides with "Paste without formatting" on
+        // Windows browsers/Office and "Paste and Match Style" on macOS, so
+        // it would shadow a binding users hit constantly.
         // keyboard-types::Modifiers: CONTROL=0x08, SHIFT=0x200 → Ctrl+Shift = 0x208.
         Self {
             modifiers: 0x208,
-            key: "KeyV".into(),
+            key: "Space".into(),
         }
     }
 }

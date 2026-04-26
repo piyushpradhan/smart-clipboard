@@ -10,9 +10,23 @@ interface AIPanelProps {
 }
 
 const PROVIDERS: { id: EmbedProvider; label: string; note?: string }[] = [
-  { id: "disabled", label: "Off" },
+  { id: "local", label: "Local (default)" },
   { id: "openai", label: "OpenAI" },
-  { id: "ollama", label: "Local (Ollama)" },
+  { id: "ollama", label: "Ollama" },
+  { id: "disabled", label: "Off" },
+];
+
+const LOCAL_MODELS: { id: string; label: string; note: string }[] = [
+  {
+    id: "bge-small-en-v1.5",
+    label: "BGE Small EN v1.5",
+    note: "Best quality. ~130 MB download on first use.",
+  },
+  {
+    id: "all-minilm-l6-v2",
+    label: "All-MiniLM-L6-v2",
+    note: "Smallest, fastest. ~90 MB download on first use.",
+  },
 ];
 
 export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
@@ -122,11 +136,10 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
             lineHeight: 1.5,
           }}
         >
-          Two independent AI features, both optional. The{" "}
-          <b>embedding provider</b> powers semantic search; the{" "}
-          <b>Anthropic key</b> powers one-line intent labels via Claude Haiku.
-          Off by default — nothing leaves your machine until you configure a
-          provider.
+          Two independent AI features. Semantic search uses a{" "}
+          <b>bundled local embedding model</b> by default — no API key, no
+          network after the first download. The <b>Anthropic key</b> below is
+          only needed for one-line intent labels via Claude Haiku.
         </p>
 
         <StatusRow
@@ -169,6 +182,37 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
             ))}
           </div>
         </div>
+
+        {local.provider === "local" && (
+          <>
+            <Field t={t} label="Embedding model">
+              <select
+                value={local.local_model}
+                onChange={(e) => set("local_model", e.target.value)}
+                style={inputStyle}
+              >
+                {LOCAL_MODELS.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <p
+              style={{
+                fontSize: 10.5,
+                color: t.fgFaint,
+                marginTop: -6,
+                lineHeight: 1.5,
+              }}
+            >
+              {LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
+                "Runs entirely on your machine via ONNX."}{" "}
+              The first embedding may take a few seconds while the model
+              downloads.
+            </p>
+          </>
+        )}
 
         {local.provider === "openai" && (
           <>
@@ -394,6 +438,12 @@ function summariseEmbedStatus(s: EmbedSettings): {
 } {
   if (s.provider === "disabled") {
     return { kind: "off", text: "Off — fuzzy search only." };
+  }
+  if (s.provider === "local") {
+    return {
+      kind: "ok",
+      text: `Local — ${s.local_model} (offline after first download)`,
+    };
   }
   if (s.provider === "openai") {
     if (!s.openai_api_key.trim()) {

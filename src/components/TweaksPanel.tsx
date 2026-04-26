@@ -269,24 +269,26 @@ export function TweaksPanel({
 
       <Row t={t} label="Shortcut">
         <span style={{ fontSize: 10.5, color: t.fgMuted }}>
-          {tweaks.paletteShortcut ?? "Ctrl+Shift+V"}
+          {tweaks.paletteShortcut ?? "Ctrl+Shift+Space"}
         </span>
         <button
           onClick={() => {
             // keyboard-types bitflags: CONTROL=0x08, SHIFT=0x200.
-            // Ctrl+Shift = 0x208; Ctrl only = 0x08.
             const CTRL = 0x08;
             const SHIFT = 0x200;
-            const switchingToSpace = tweaks.paletteShortcut === "Ctrl+Shift+V";
+            const switchingToCtrlSpace =
+              tweaks.paletteShortcut === "Ctrl+Shift+Space";
             const next: Tweaks = {
               ...tweaks,
-              paletteShortcut: switchingToSpace ? "Ctrl+Space" : "Ctrl+Shift+V",
+              paletteShortcut: switchingToCtrlSpace
+                ? "Ctrl+Space"
+                : "Ctrl+Shift+Space",
             };
             onChange(next);
             void invoke("set_shortcut", {
               sc: {
-                modifiers: switchingToSpace ? CTRL : CTRL | SHIFT,
-                key: switchingToSpace ? "Space" : "KeyV",
+                modifiers: switchingToCtrlSpace ? CTRL : CTRL | SHIFT,
+                key: "Space",
               },
             });
           }}
