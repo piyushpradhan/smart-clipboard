@@ -29,12 +29,15 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             label: windows
+            bundles: nsis
           - os: macos-latest
             target: aarch64-apple-darwin
             label: macos
+            bundles: ''
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             label: linux
+            bundles: ''
 
     runs-on: ${{ matrix.os }}
 
@@ -72,7 +75,13 @@ jobs:
       - run: npm ci
 
       - name: Build Tauri release bundles
-        run: npm run tauri -- build --target ${{ matrix.target }}
+        shell: bash
+        run: |
+          if [ -n "${{ matrix.bundles }}" ]; then
+            npm run tauri -- build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+          else
+            npm run tauri -- build --target ${{ matrix.target }}
+          fi
 
       - name: Upload build artifacts (always)
         uses: actions/upload-artifact@v4
