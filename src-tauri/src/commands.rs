@@ -1,3 +1,4 @@
+use arboard::Clipboard;
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -163,6 +164,39 @@ pub struct ImageData {
     pub width: usize,
     pub height: usize,
     pub bytes: Vec<u8>,
+}
+
+#[tauri::command]
+pub fn copy_image(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let id_num: i64 = id.parse().map_err(map_err)?;
+
+    let data: Option<Vec<u8>> = conn
+        .query_row(
+            "SELECT image_data FROM items WHERE id = ?1 AND category = 'image' AND deleted = 0",
+            params![id_num],
+            |r| r.get(0),
+        )
+        .ok()
+        .filter(|d: &Vec<u8>| !d.is_empty());
+
+    match data {
+        Some(raw) if raw.len() >= 8 => {
+            let width = u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]) as usize;
+            let height = u32::from_le_bytes([raw[4], raw[5], raw[6], raw[7]]) as usize;
+            let bytes: Vec<u8> = raw[8..].to_vec();
+
+            let mut cb = Clipboard::new().map_err(|e| e.to_string())?;
+            let img = arboard::ImageData {
+                width,
+                height,
+                bytes,
+            };
+            cb.set_image(img).map_err(|e| e.to_string())?;
+            Ok(())
+        }
+        _ => Err("Image not found".into()),
+    }
 }
 
 #[tauri::command]

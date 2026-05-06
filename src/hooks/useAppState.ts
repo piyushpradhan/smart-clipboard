@@ -97,10 +97,14 @@ export function useAppState(): AppState {
   );
 
   const copyItem = useCallback(
-    (id: string, _plainText?: boolean) => {
+    async (id: string, _plainText?: boolean) => {
       const it = itemsRef.current.find((i) => i.id === id);
       if (!it) return;
-      writeText(it.content).catch((err) => console.error("clipboard write failed", err));
+      if (it.category === "image") {
+        await invoke("copy_image", { id }).catch((err) => console.error("copy_image failed", err));
+      } else {
+        writeText(it.content).catch((err) => console.error("clipboard write failed", err));
+      }
       invoke("touch_item", { id }).then(
         () => void refresh(),
         (err) => console.error("touch_item failed", err),

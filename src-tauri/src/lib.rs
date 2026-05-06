@@ -140,6 +140,7 @@ pub fn run() {
             commands::search_fts,
             commands::search_semantic,
             commands::get_image,
+            commands::copy_image,
             settings::get_settings,
             settings::set_settings,
             settings::get_hint_dismissed,
