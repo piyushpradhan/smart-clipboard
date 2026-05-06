@@ -81,3 +81,100 @@ pub fn make_preview(text: &str) -> String {
         first_line
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{categorize, make_preview};
+
+    #[test]
+    fn test_url() {
+        assert_eq!(categorize("https://example.com"), "url");
+        assert_eq!(categorize("http://test.org/path"), "url");
+    }
+
+    #[test]
+    fn test_email() {
+        assert_eq!(categorize("user@example.com"), "email");
+        assert_eq!(categorize("test.user+tag@domain.org"), "email");
+    }
+
+    #[test]
+    fn test_phone() {
+        assert_eq!(categorize("+1 555 123 4567"), "phone");
+        assert_eq!(categorize("555-1234"), "phone");
+        assert_eq!(categorize("(555) 123-4567"), "phone");
+    }
+
+    #[test]
+    fn test_color_hex() {
+        assert_eq!(categorize("#ff0000"), "color");
+        assert_eq!(categorize("#fff"), "color");
+        assert_eq!(categorize("123456"), "number");
+    }
+
+    #[test]
+    fn test_color_rgb() {
+        assert_eq!(categorize("rgb(255, 0, 0)"), "color");
+        assert_eq!(categorize("hsl(120, 50%, 50%)"), "color");
+    }
+
+    #[test]
+    fn test_path_windows() {
+        assert_eq!(categorize("C:\\Users\\test"), "path");
+        assert_eq!(categorize("D:/folder/file.txt"), "path");
+    }
+
+    #[test]
+    fn test_path_unix() {
+        assert_eq!(categorize("/home/user/file"), "path");
+        assert_eq!(categorize("~/Documents"), "path");
+        assert_eq!(categorize("./script.sh"), "path");
+    }
+
+    #[test]
+    fn test_number() {
+        assert_eq!(categorize("123"), "number");
+        assert_eq!(categorize("-45.67"), "number");
+        assert_eq!(categorize("3.14159"), "number");
+    }
+
+    #[test]
+    fn test_code() {
+        assert_eq!(categorize("function foo() { return 1; }"), "code");
+        assert_eq!(categorize("const x = 5;"), "code");
+        assert_eq!(categorize("import React from 'react'"), "code");
+        assert_eq!(categorize("SELECT * FROM users"), "code");
+    }
+
+    #[test]
+    fn test_multiline_code() {
+        let code = "fn main() {\n    println!(\"hello\");\n    let x = 1;\n}";
+        assert_eq!(categorize(code), "code");
+    }
+
+    #[test]
+    fn test_text_fallback() {
+        assert_eq!(categorize("Hello world"), "text");
+        assert_eq!(categorize("random text here"), "text");
+    }
+
+    #[test]
+    fn test_empty() {
+        assert_eq!(categorize(""), "text");
+        assert_eq!(categorize("   "), "text");
+    }
+
+    #[test]
+    fn test_make_preview() {
+        assert_eq!(make_preview("hello world"), "hello world");
+        assert_eq!(make_preview("line1\nline2\nline3"), "line1");
+    }
+
+    #[test]
+    fn test_make_preview_truncates_long_lines() {
+        let long = "a".repeat(200);
+        let preview = make_preview(&long);
+        assert!(preview.ends_with('…'));
+        assert_eq!(preview.len(), 161);
+    }
+}

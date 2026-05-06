@@ -50,7 +50,6 @@ export function useSettings() {
         setLoaded(true);
       },
       (err) => {
-        // eslint-disable-next-line no-console
         console.error("get_settings failed", err);
         setLoaded(true);
       },
@@ -62,7 +61,6 @@ export function useSettings() {
     try {
       await invoke("set_settings", { cfg: next });
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error("set_settings failed", err);
     }
   }, []);
