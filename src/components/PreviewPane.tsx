@@ -5,6 +5,58 @@ import type { ClipItem, Theme } from "../lib/types";
 import type { AppState } from "../hooks/useAppState";
 import { CategoryChip, ItemBody, Kbd } from "./Primitives";
 
+function ImagePreview({
+  t,
+  item,
+  getImage,
+}: {
+  t: Theme;
+  item: ClipItem;
+  getImage: (id: string) => Promise<{ width: number; height: number; data: Uint8Array } | null>;
+}) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getImage(item.id).then((img) => {
+      if (cancelled || !img) return;
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const imgData = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+        ctx.putImageData(imgData, 0, 0);
+        setImageUrl(canvas.toDataURL());
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [item.id, getImage]);
+
+  if (!imageUrl) {
+    return (
+      <div style={{ color: t.fgFaint, fontSize: 13 }}>
+        Loading image...
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={imageUrl}
+      alt={item.preview}
+      style={{
+        maxWidth: "100%",
+        maxHeight: 400,
+        borderRadius: 8,
+        background: t.bgSurfaceAlt,
+      }}
+    />
+  );
+}
+
 interface ActBtnProps {
   t: Theme;
   primary?: boolean;
@@ -196,7 +248,11 @@ export function PreviewPane({
           ))}
       </div>
       <div style={{ flex: 1, overflow: "auto", padding: "18px 22px" }}>
-        <ItemBody t={t} item={item} />
+        {item.category === "image" ? (
+          <ImagePreview t={t} item={item} getImage={app.getImage} />
+        ) : (
+          <ItemBody t={t} item={item} />
+        )}
       </div>
       <div
         style={{

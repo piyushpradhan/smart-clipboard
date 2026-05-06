@@ -30,6 +30,7 @@ export const CATEGORIES: Category[] = [
   "path",
   "address",
   "number",
+  "image",
 ];
 
 export interface CategoryStyle {
