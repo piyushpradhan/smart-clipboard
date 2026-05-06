@@ -7,7 +7,8 @@ export type Category =
   | "path"
   | "text"
   | "address"
-  | "number";
+  | "number"
+  | "image";
 
 export interface ClipItem {
   id: string;
@@ -37,6 +38,8 @@ export type PreviewMode = "split" | "inline";
 export type SearchMode = "fuzzy" | "semantic";
 export type Filter = "all" | "pinned" | Category;
 
+export type TimeFilter = "all" | "today" | "yesterday" | "week" | "month";
+
 export interface Tweaks {
   theme: ThemeMode;
   accentHue: number;
@@ -47,6 +50,7 @@ export interface Tweaks {
   previewMode: PreviewMode;
   paletteShortcut?: string;
   autostart?: boolean;
+  plainTextOnly?: boolean;
 }
 
 export interface Theme {

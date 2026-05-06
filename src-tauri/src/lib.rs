@@ -139,6 +139,7 @@ pub fn run() {
             commands::clear_history,
             commands::search_fts,
             commands::search_semantic,
+            commands::get_image,
             settings::get_settings,
             settings::set_settings,
             settings::get_hint_dismissed,

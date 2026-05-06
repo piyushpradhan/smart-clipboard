@@ -266,6 +266,15 @@ export function TweaksPanel({
           </Chip>
         ))}
       </Row>
+      <Row t={t} label="Plain text">
+        <Chip
+          t={t}
+          active={tweaks.plainTextOnly ?? false}
+          onClick={() => set("plainTextOnly", !(tweaks.plainTextOnly ?? false))}
+        >
+          {(tweaks.plainTextOnly ?? false) ? "always" : "auto"}
+        </Chip>
+      </Row>
 
       <Row t={t} label="Shortcut">
         <span style={{ fontSize: 10.5, color: t.fgMuted }}>

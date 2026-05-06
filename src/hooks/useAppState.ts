@@ -19,12 +19,13 @@ export interface AppState {
   libraryOpen: boolean;
   setLibraryOpen: (v: boolean) => void;
   showToast: (msg: string, kind?: ToastKind, undo?: () => void) => void;
-  copyItem: (id: string) => void;
+  copyItem: (id: string, plainText?: boolean) => void;
   pinItem: (id: string) => void;
   deleteItem: (id: string) => void;
   updateLabel: (id: string, label: string) => void;
   refresh: () => Promise<void>;
   semanticSearch: (query: string, limit?: number) => Promise<ClipItem[]>;
+  getImage: (id: string) => Promise<{ width: number; height: number; data: Uint8Array } | null>;
 }
 
 let toastSeq = 0;
@@ -96,7 +97,7 @@ export function useAppState(): AppState {
   );
 
   const copyItem = useCallback(
-    (id: string) => {
+    (id: string, _plainText?: boolean) => {
       const it = itemsRef.current.find((i) => i.id === id);
       if (!it) return;
       writeText(it.content).catch((err) => console.error("clipboard write failed", err));
@@ -164,6 +165,27 @@ export function useAppState(): AppState {
     [],
   );
 
+  const getImage = useCallback(
+    async (id: string): Promise<{ width: number; height: number; data: Uint8Array } | null> => {
+      try {
+        const result = await invoke<{ width: number; height: number; bytes: number[] } | null>(
+          "get_image",
+          { id },
+        );
+        if (!result) return null;
+        return {
+          width: result.width,
+          height: result.height,
+          data: new Uint8Array(result.bytes),
+        };
+      } catch (err) {
+        console.error("get_image failed", err);
+        return null;
+      }
+    },
+    [],
+  );
+
   return {
     items: useMemo(() => items.filter((i) => !i.deleted), [items]),
     toast,
@@ -179,5 +201,6 @@ export function useAppState(): AppState {
     updateLabel,
     refresh,
     semanticSearch,
+    getImage,
   };
 }

@@ -16,6 +16,7 @@ import type {
   PreviewMode,
   SearchMode,
   Theme,
+  TimeFilter,
 } from "../lib/types";
 import type { AppState } from "../hooks/useAppState";
 import { CategoryChip, Kbd } from "../components/Primitives";
@@ -48,6 +49,7 @@ interface ListRowProps {
   onClick: () => void;
   onDouble: () => void;
   query: string;
+  getImage?: (id: string) => Promise<{ width: number; height: number; data: Uint8Array } | null>;
 }
 
 interface SemanticBannerProps {
@@ -168,7 +170,8 @@ function ListRow({
   onClick,
   onDouble,
   query,
-}: ListRowProps) {
+  getImage,
+}: ListRowProps & { getImage?: (id: string) => Promise<{ width: number; height: number; data: Uint8Array } | null> }) {
   const isMono =
     item.category === "code" ||
     item.category === "url" ||
@@ -177,6 +180,29 @@ function ListRow({
     item.category === "email" ||
     item.category === "phone" ||
     item.category === "number";
+  const isImage = item.category === "image";
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isImage || !getImage) return;
+    let cancelled = false;
+    getImage(item.id).then((img) => {
+      if (cancelled || !img) return;
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.min(img.width, 120);
+      canvas.height = Math.min(img.height, 60);
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const imgData = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
+        ctx.putImageData(imgData, 0, 0);
+        setImageUrl(canvas.toDataURL());
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [item.id, isImage, getImage]);
+
   return (
     <div
       data-id={item.id}
@@ -269,7 +295,24 @@ function ListRow({
           whiteSpace: "nowrap",
         }}
       >
-        {item.preview}
+        {isImage ? (
+          imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={item.preview}
+              style={{
+                height: 40,
+                borderRadius: 4,
+                objectFit: "contain",
+                background: t.bgSurfaceAlt,
+              }}
+            />
+          ) : (
+            <span style={{ color: t.fgFaint }}>Loading...</span>
+          )
+        ) : (
+          item.preview
+        )}
       </div>
     </div>
   );
@@ -292,6 +335,7 @@ export function Library({
   const [query, setQuery] = useState(initialQuery);
   const [mode, setMode] = useState<SearchMode>(initialMode);
   const [filter, setFilter] = useState<Filter>(initialFilter);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(
     initialSelectedId ?? app.items[0]?.id ?? null,
   );
@@ -337,10 +381,38 @@ export function Library({
   const listRef = useRef<HTMLDivElement>(null);
 
   const filterStage = useMemo(() => {
-    if (filter === "all") return app.items;
-    if (filter === "pinned") return app.items.filter((i) => i.pinned);
-    return app.items.filter((i) => i.category === filter);
-  }, [app.items, filter]);
+    let items = app.items;
+    if (filter === "pinned") {
+      items = items.filter((i) => i.pinned);
+    } else if (filter !== "all") {
+      items = items.filter((i) => i.category === filter);
+    }
+    if (timeFilter !== "all") {
+      const now = Date.now();
+      const minute = 60 * 1000;
+      const day = 24 * 60 * minute;
+      items = items.filter((i) => {
+        const age = i.minutesAgo * minute;
+        switch (timeFilter) {
+          case "today":
+            return now - age < day;
+          case "yesterday": {
+            const yesterdayStart = now - day;
+            const yesterdayEnd = now;
+            const itemTime = now - age;
+            return itemTime >= yesterdayStart && itemTime < yesterdayEnd;
+          }
+          case "week":
+            return age < 7 * day;
+          case "month":
+            return age < 30 * day;
+          default:
+            return true;
+        }
+      });
+    }
+    return items;
+  }, [app.items, filter, timeFilter]);
 
   const [semanticResults, setSemanticResults] = useState<typeof app.items | null>(null);
   const [semanticError, setSemanticError] = useState<string | null>(null);
@@ -686,6 +758,50 @@ export function Library({
               fontFamily: t.fontMono,
             }}
           >
+            Time
+          </div>
+          {(
+            [
+              ["all", "Any time"],
+              ["today", "Today"],
+              ["yesterday", "Yesterday"],
+              ["week", "Last 7 days"],
+              ["month", "Last 30 days"],
+            ] as [TimeFilter, string][]
+          ).map(([value, label]) => (
+            <SidebarRow
+              key={value}
+              t={t}
+              active={timeFilter === value}
+              onClick={() => setTimeFilter(value)}
+            >
+              <span
+                style={{
+                  width: 16,
+                  color: t.fgFaint,
+                  fontSize: 11,
+                  textAlign: "center",
+                }}
+              >
+                ⌚
+              </span>
+              <span style={{ flex: 1 }}>{label}</span>
+            </SidebarRow>
+          ))}
+
+          <div
+            style={{
+              marginTop: 14,
+              marginBottom: 4,
+              padding: "0 10px",
+              fontSize: 10,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+              color: t.fgFaint,
+              fontWeight: 600,
+              fontFamily: t.fontMono,
+            }}
+          >
             Categories
           </div>
           {CATEGORIES.map((cat: Category) => {
@@ -912,6 +1028,7 @@ export function Library({
                           onClick={() => setSelectedId(item.id)}
                           onDouble={() => app.copyItem(item.id)}
                           query={query}
+                          getImage={app.getImage}
                         />
                       ))}
                     </div>
@@ -928,6 +1045,7 @@ export function Library({
                     onClick={() => setSelectedId(item.id)}
                     onDouble={() => app.copyItem(item.id)}
                     query={query}
+                    getImage={app.getImage}
                   />
                 ))}
           </div>

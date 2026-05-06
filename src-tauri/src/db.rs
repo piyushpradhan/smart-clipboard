@@ -81,6 +81,19 @@ fn migrate(conn: &Connection) -> rusqlite::Result<()> {
         conn.execute_batch("PRAGMA user_version = 2;")?;
     }
 
+    if version < 3 {
+        // Image storage: PNG bytes
+        let has_image = conn
+            .prepare("SELECT 1 FROM pragma_table_info('items') WHERE name='image_data'")?
+            .exists([])?;
+        if !has_image {
+            conn.execute_batch(
+                "ALTER TABLE items ADD COLUMN image_data BLOB;",
+            )?;
+        }
+        conn.execute_batch("PRAGMA user_version = 3;")?;
+    }
+
     Ok(())
 }
 

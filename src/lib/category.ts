@@ -17,6 +17,7 @@ export const CATEGORY_META: Record<Category, CategoryMeta> = {
   text: { label: "Text", mono: "TEXT", hue: 220, icon: "¶" },
   address: { label: "Address", mono: "ADDR", hue: 100, icon: "⌂" },
   number: { label: "Number", mono: "NUM", hue: 190, icon: "#" },
+  image: { label: "Image", mono: "IMG", hue: 280, icon: "🖼" },
 };
 
 export const CATEGORIES: Category[] = [
