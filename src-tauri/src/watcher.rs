@@ -20,16 +20,18 @@ pub fn spawn(app: AppHandle) {
         loop {
             std::thread::sleep(Duration::from_millis(500));
 
-            // Check for image first
-            if let Ok(img) = cb.get_image() {
-                let hash = simple_hash(&img);
-                if last_image_hash != Some(hash) {
-                    last_image_hash = Some(hash);
-                    let source = active_window_title();
-                    insert_image_and_emit(&app, &img, source);
+            // Check for image first (only on supported platforms)
+            #[cfg(target_os = "windows")]
+            {
+                if let Ok(img) = cb.get_image() {
+                    let hash = simple_hash(&img);
+                    if last_image_hash != Some(hash) {
+                        last_image_hash = Some(hash);
+                        let source = active_window_title();
+                        insert_image_and_emit(&app, &img, source);
+                    }
+                    continue;
                 }
-                // If we have an image, skip text check for this cycle
-                continue;
             }
 
             // Check for text
