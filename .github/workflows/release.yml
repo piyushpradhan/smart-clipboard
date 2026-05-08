@@ -5,7 +5,9 @@ name: Release
 # Triggers:
 #   - Pushing a tag that starts with "v" (e.g. v0.1.0, v1.0.0-rc1) — publishes
 #     a draft GitHub Release with installers attached for every platform.
-#   - Manual dispatch — builds + uploads artifacts without creating a release.
+#   - Pushing a branch named "release/vX.Y.Z" — same as above, creates the tag
+#     automatically if it doesn't exist.
+#   - Manual dispatch with a tag_name input — builds + creates a draft release.
 #
 # Outputs per platform:
 #   - windows-latest : .msi + .exe (NSIS)
@@ -15,13 +17,42 @@ name: Release
 on:
   push:
     tags: ['v*']
+    branches: ['release/v*']
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (e.g. v0.5.0)'
+        required: true
 
 permissions:
   contents: write
 
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      is_release: ${{ steps.version.outputs.is_release }}
+    steps:
+      - name: Compute release tag
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/heads/release/v* ]]; then
+            echo "tag=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_OUTPUT
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          elif [[ -n "${{ github.event.inputs.tag_name }}" ]]; then
+            echo "tag=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+            echo "is_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "tag=" >> $GITHUB_OUTPUT
+            echo "is_release=false" >> $GITHUB_OUTPUT
+          fi
+
   check:
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +80,7 @@ jobs:
         run: npm test
 
   build:
-    needs: check
+    needs: [prepare, check]
     strategy:
       fail-fast: false
       matrix:
@@ -123,10 +154,11 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
           if-no-files-found: warn
 
-      - name: Attach to GitHub Release (tag pushes only)
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Attach to GitHub Release
+        if: needs.prepare.outputs.is_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
           draft: true
           generate_release_notes: true
           files: |

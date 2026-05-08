@@ -1,10 +1,69 @@
 use arboard::Clipboard;
+use image::{ImageBuffer, Rgba};
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::db::Db;
+
+// PNG file magic bytes — used to detect new-format vs. legacy RGBA storage.
+const PNG_MAGIC: &[u8; 8] = &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+
+/// Ensures the stored bytes are in PNG format.
+/// New items are already PNG; legacy items used `[width:4le][height:4le][rgba…]`
+/// and are re-encoded on first access.
+fn ensure_png(raw: &[u8]) -> Result<Vec<u8>, String> {
+    if raw.len() >= 8 && raw.starts_with(PNG_MAGIC) {
+        return Ok(raw.to_vec());
+    }
+    // Legacy format: [width:4le][height:4le][rgba_bytes…]
+    if raw.len() < 8 {
+        return Err("Image data too short".into());
+    }
+    let width = u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]) as usize;
+    let height = u32::from_le_bytes([raw[4], raw[5], raw[6], raw[7]]) as usize;
+    let rgba = &raw[8..];
+    let expected = width * height * 4;
+    if rgba.len() != expected {
+        return Err(format!(
+            "Legacy RGBA length mismatch: expected {expected}, got {}",
+            rgba.len()
+        ));
+    }
+    let buf = ImageBuffer::<Rgba<u8>, _>::from_raw(width as u32, height as u32, rgba.to_vec())
+        .ok_or("Legacy image buffer creation failed")?;
+    let mut png = Vec::new();
+    buf.write_to(
+        &mut std::io::Cursor::new(&mut png),
+        image::ImageFormat::Png,
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(png)
+}
+
+/// Decodes stored bytes to raw RGBA — needed for writing back to the clipboard
+/// via arboard, which only accepts RGBA pixel data.
+fn decode_to_rgba(raw: &[u8]) -> Result<RawImage, String> {
+    if raw.len() >= 8 && raw.starts_with(PNG_MAGIC) {
+        let img = image::load_from_memory(raw).map_err(|e| e.to_string())?;
+        let rgba = img.into_rgba8();
+        let (width, height) = (rgba.width() as usize, rgba.height() as usize);
+        return Ok(RawImage { width, height, bytes: rgba.into_raw() });
+    }
+    if raw.len() < 8 {
+        return Err("Image data too short".into());
+    }
+    let width = u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]) as usize;
+    let height = u32::from_le_bytes([raw[4], raw[5], raw[6], raw[7]]) as usize;
+    Ok(RawImage { width, height, bytes: raw[8..].to_vec() })
+}
+
+struct RawImage {
+    width: usize,
+    height: usize,
+    bytes: Vec<u8>,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ClipItem {
@@ -134,69 +193,60 @@ pub fn delete_item(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
     Ok(())
 }
 
-#[tauri::command]
-pub fn get_image(id: String, db: State<'_, Arc<Db>>) -> Result<Option<ImageData>, String> {
-    let conn = db.0.lock().map_err(|e| e.to_string())?;
-    let id_num: i64 = id.parse().map_err(map_err)?;
-
-    let data: Option<Vec<u8>> = conn
-        .query_row(
-            "SELECT image_data FROM items WHERE id = ?1 AND category = 'image' AND deleted = 0",
-            params![id_num],
-            |r| r.get(0),
-        )
-        .ok()
-        .filter(|d: &Vec<u8>| !d.is_empty());
-
-    match data {
-        Some(raw) if raw.len() >= 8 => {
-            let width = u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]) as usize;
-            let height = u32::from_le_bytes([raw[4], raw[5], raw[6], raw[7]]) as usize;
-            let bytes = raw[8..].to_vec();
-            Ok(Some(ImageData { width, height, bytes }))
-        }
-        _ => Ok(None),
-    }
-}
-
+/// Returned by `get_image`: PNG bytes the frontend can create a Blob URL from,
+/// plus pre-parsed dimensions so callers don't need to parse the PNG header.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ImageData {
+pub struct ImagePng {
+    pub bytes: Vec<u8>,
     pub width: usize,
     pub height: usize,
-    pub bytes: Vec<u8>,
+}
+
+fn load_raw(conn: &rusqlite::Connection, id_num: i64) -> Option<Vec<u8>> {
+    conn.query_row(
+        "SELECT image_data FROM items WHERE id = ?1 AND category = 'image' AND deleted = 0",
+        params![id_num],
+        |r| r.get(0),
+    )
+    .ok()
+    .filter(|d: &Vec<u8>| !d.is_empty())
+}
+
+#[tauri::command]
+pub fn get_image(id: String, db: State<'_, Arc<Db>>) -> Result<Option<ImagePng>, String> {
+    let conn = db.0.lock().map_err(|e| e.to_string())?;
+    let id_num: i64 = id.parse().map_err(map_err)?;
+    let raw = match load_raw(&conn, id_num) {
+        None => return Ok(None),
+        Some(r) => r,
+    };
+    let png = ensure_png(&raw)?;
+    // Read width/height from the PNG IHDR (bytes 16-23, big-endian).
+    let (width, height) = if png.len() >= 24 {
+        (
+            u32::from_be_bytes([png[16], png[17], png[18], png[19]]) as usize,
+            u32::from_be_bytes([png[20], png[21], png[22], png[23]]) as usize,
+        )
+    } else {
+        (0, 0)
+    };
+    Ok(Some(ImagePng { bytes: png, width, height }))
 }
 
 #[tauri::command]
 pub fn copy_image(id: String, db: State<'_, Arc<Db>>) -> Result<(), String> {
     let conn = db.0.lock().map_err(|e| e.to_string())?;
     let id_num: i64 = id.parse().map_err(map_err)?;
-
-    let data: Option<Vec<u8>> = conn
-        .query_row(
-            "SELECT image_data FROM items WHERE id = ?1 AND category = 'image' AND deleted = 0",
-            params![id_num],
-            |r| r.get(0),
-        )
-        .ok()
-        .filter(|d: &Vec<u8>| !d.is_empty());
-
-    match data {
-        Some(raw) if raw.len() >= 8 => {
-            let width = u32::from_le_bytes([raw[0], raw[1], raw[2], raw[3]]) as usize;
-            let height = u32::from_le_bytes([raw[4], raw[5], raw[6], raw[7]]) as usize;
-            let bytes: Vec<u8> = raw[8..].to_vec();
-
-            let mut cb = Clipboard::new().map_err(|e| e.to_string())?;
-            let img = arboard::ImageData {
-                width,
-                height,
-                bytes: bytes.into(),
-            };
-            cb.set_image(img).map_err(|e| e.to_string())?;
-            Ok(())
-        }
-        _ => Err("Image not found".into()),
-    }
+    let raw = load_raw(&conn, id_num).ok_or("Image not found")?;
+    let decoded = decode_to_rgba(&raw)?;
+    let mut cb = Clipboard::new().map_err(|e| e.to_string())?;
+    cb.set_image(arboard::ImageData {
+        width: decoded.width,
+        height: decoded.height,
+        bytes: decoded.bytes.into(),
+    })
+    .map_err(|e| e.to_string())?;
+    Ok(())
 }
 
 #[tauri::command]

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { relTime } from "../lib/time";
 import type { ClipItem, Theme } from "../lib/types";
 import type { AppState } from "../hooks/useAppState";
+import { useImageUrl } from "../hooks/useImageUrl";
 import { CategoryChip, ItemBody, Kbd } from "./Primitives";
 
 function ImagePreview({
@@ -12,47 +13,19 @@ function ImagePreview({
 }: {
   t: Theme;
   item: ClipItem;
-  getImage: (id: string) => Promise<{ width: number; height: number; data: Uint8Array } | null>;
+  getImage: (id: string) => Promise<Blob | null>;
 }) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const url = useImageUrl(item.id, getImage);
 
-  useEffect(() => {
-    let cancelled = false;
-    getImage(item.id).then((img) => {
-      if (cancelled || !img) return;
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        const imgData = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
-        ctx.putImageData(imgData, 0, 0);
-        setImageUrl(canvas.toDataURL());
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [item.id, getImage]);
-
-  if (!imageUrl) {
-    return (
-      <div style={{ color: t.fgFaint, fontSize: 13 }}>
-        Loading image...
-      </div>
-    );
+  if (!url) {
+    return <div style={{ color: t.fgFaint, fontSize: 13 }}>Loading image…</div>;
   }
 
   return (
     <img
-      src={imageUrl}
+      src={url}
       alt={item.preview}
-      style={{
-        maxWidth: "100%",
-        maxHeight: 400,
-        borderRadius: 8,
-        background: t.bgSurfaceAlt,
-      }}
+      style={{ maxWidth: "100%", maxHeight: 400, borderRadius: 8, background: t.bgSurfaceAlt }}
     />
   );
 }

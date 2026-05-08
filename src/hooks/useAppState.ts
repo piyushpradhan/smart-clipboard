@@ -4,6 +4,7 @@ import { listen } from "@tauri-apps/api/event";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { truncate } from "../lib/time";
 import type { ClipItem, Toast, ToastKind } from "../lib/types";
+import { evictImageUrl } from "./useImageUrl";
 
 export interface BackfillState {
   remaining: number;
@@ -25,7 +26,7 @@ export interface AppState {
   updateLabel: (id: string, label: string) => void;
   refresh: () => Promise<void>;
   semanticSearch: (query: string, limit?: number) => Promise<ClipItem[]>;
-  getImage: (id: string) => Promise<{ width: number; height: number; data: Uint8Array } | null>;
+  getImage: (id: string) => Promise<Blob | null>;
 }
 
 let toastSeq = 0;
@@ -129,8 +130,10 @@ export function useAppState(): AppState {
 
   const deleteItem = useCallback(
     (id: string) => {
+      const it = itemsRef.current.find((i) => i.id === id);
       invoke("delete_item", { id }).then(
         () => {
+          if (it?.category === "image") evictImageUrl(id);
           void refresh();
           const undo = () => {
             invoke("restore_item", { id }).then(
@@ -169,26 +172,19 @@ export function useAppState(): AppState {
     [],
   );
 
-  const getImage = useCallback(
-    async (id: string): Promise<{ width: number; height: number; data: Uint8Array } | null> => {
-      try {
-        const result = await invoke<{ width: number; height: number; bytes: number[] } | null>(
-          "get_image",
-          { id },
-        );
-        if (!result) return null;
-        return {
-          width: result.width,
-          height: result.height,
-          data: new Uint8Array(result.bytes),
-        };
-      } catch (err) {
-        console.error("get_image failed", err);
-        return null;
-      }
-    },
-    [],
-  );
+  const getImage = useCallback(async (id: string): Promise<Blob | null> => {
+    try {
+      const result = await invoke<{ bytes: number[]; width: number; height: number } | null>(
+        "get_image",
+        { id },
+      );
+      if (!result) return null;
+      return new Blob([new Uint8Array(result.bytes)], { type: "image/png" });
+    } catch (err) {
+      console.error("get_image failed", err);
+      return null;
+    }
+  }, []);
 
   return {
     items: useMemo(() => items.filter((i) => !i.deleted), [items]),
