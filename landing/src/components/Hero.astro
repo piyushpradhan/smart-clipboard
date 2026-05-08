@@ -1,0 +1,210 @@
+---
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, "");
+---
+
+<section class="hero">
+  <div class="container hero__inner">
+    <div class="hero__copy">
+      <span class="eyebrow">v0.5 — local first</span>
+      <h1 class="hero__title">
+        A clipboard that<br />
+        <span class="hero__title-accent">remembers everything.</span>
+      </h1>
+      <p class="hero__lede">
+        Recall is a fast, private clipboard manager for macOS, Windows, and
+        Linux. Fuzzy search. Semantic search. Images, code, links, colors —
+        every clip you've ever made, one keystroke away.
+      </p>
+      <div class="hero__ctas">
+        <a class="button button--primary" href="#download">
+          Download
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </a>
+        <a
+          class="button button--ghost"
+          href="https://github.com/piyushpradhan/recall"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View on GitHub
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M17 7H8M17 7V16"/></svg>
+        </a>
+      </div>
+      <div class="hero__hint">
+        <span>Press</span>
+        <span class="kbd">Ctrl</span>
+        <span class="kbd">Shift</span>
+        <span class="kbd">V</span>
+        <span>to open the palette anywhere.</span>
+      </div>
+    </div>
+
+    <div class="hero__media">
+      <div class="hero__frame">
+        <div class="hero__chrome">
+          <span class="hero__dot" data-color="red"></span>
+          <span class="hero__dot" data-color="yellow"></span>
+          <span class="hero__dot" data-color="green"></span>
+          <span class="hero__chrome-title">Recall — Quick Palette</span>
+        </div>
+        <video
+          src={`${baseUrl}/media/image-copy-paste.webm`}
+          autoplay
+          loop
+          muted
+          playsinline
+          preload="metadata"
+          aria-label="Recall palette demo: searching for an image clip and pasting it"
+        ></video>
+      </div>
+      <div class="hero__glow" aria-hidden="true"></div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    padding: 80px 0 100px;
+    overflow: hidden;
+  }
+
+  .hero__inner {
+    display: grid;
+    grid-template-columns: minmax(320px, 1fr) minmax(320px, 1.15fr);
+    gap: 60px;
+    align-items: center;
+  }
+
+  .hero__copy {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .hero__title {
+    font-size: clamp(40px, 6vw, 64px);
+    line-height: 1.04;
+    margin-top: 6px;
+  }
+
+  .hero__title-accent {
+    background: linear-gradient(
+      135deg,
+      var(--accent) 0%,
+      oklch(72% 0.18 calc(var(--accent-hue) + 30)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero__lede {
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--fg-muted);
+    max-width: 540px;
+  }
+
+  .hero__ctas {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+
+  .hero__hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--fg-faint);
+    margin-top: 8px;
+  }
+
+  .hero__media {
+    position: relative;
+  }
+
+  .hero__frame {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-window);
+    border: 1px solid var(--border);
+    box-shadow:
+      0 60px 120px -30px rgba(0, 0, 0, 0.7),
+      0 20px 40px -10px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+  }
+
+  .hero__chrome {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-soft);
+    background: oklch(15% 0.006 250);
+    position: relative;
+  }
+
+  .hero__dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 999px;
+  }
+
+  .hero__dot[data-color="red"] {
+    background: oklch(64% 0.18 25);
+  }
+
+  .hero__dot[data-color="yellow"] {
+    background: oklch(80% 0.13 85);
+  }
+
+  .hero__dot[data-color="green"] {
+    background: oklch(70% 0.16 145);
+  }
+
+  .hero__chrome-title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--fg-faint);
+    letter-spacing: 0.05em;
+  }
+
+  .hero__frame video {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .hero__glow {
+    position: absolute;
+    inset: -40px;
+    background: radial-gradient(
+      400px 280px at 50% 50%,
+      oklch(60% 0.2 var(--accent-hue) / 0.45),
+      transparent 70%
+    );
+    z-index: 1;
+    pointer-events: none;
+    filter: blur(20px);
+  }
+
+  @media (max-width: 980px) {
+    .hero {
+      padding: 56px 0 64px;
+    }
+    .hero__inner {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+    .hero__lede {
+      max-width: none;
+    }
+  }
+</style>

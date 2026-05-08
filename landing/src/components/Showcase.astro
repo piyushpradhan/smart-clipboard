@@ -1,0 +1,136 @@
+---
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+const shots = [
+  {
+    src: `${baseUrl}/media/palette-image-preview.png`,
+    title: "Quick palette",
+    body: "Global hotkey opens a Spotlight-style palette over any app. Arrow keys, type-to-filter, Enter to paste.",
+    width: 1440,
+    height: 900,
+  },
+  {
+    src: `${baseUrl}/media/library-image-filter.png`,
+    title: "Full library",
+    body: "Browse, filter, edit labels, and pin clips. Time grouping, category sidebar, and a preview pane on the side.",
+    width: 1440,
+    height: 900,
+  },
+];
+---
+
+<section class="showcase" id="showcase">
+  <div class="container">
+    <div class="showcase__head">
+      <span class="eyebrow">A look around</span>
+      <h2 class="showcase__title">Two surfaces. One mental model.</h2>
+      <p class="showcase__lede">
+        Reach for the palette mid-flow. Open the library when you want to
+        organize, label, and dig.
+      </p>
+    </div>
+
+    <div class="showcase__grid">
+      {
+        shots.map((s) => (
+          <figure class="shot">
+            <div class="shot__frame">
+              <img
+                src={s.src}
+                alt={s.title}
+                width={s.width}
+                height={s.height}
+                loading="lazy"
+              />
+            </div>
+            <figcaption>
+              <h3 class="shot__title">{s.title}</h3>
+              <p class="shot__body">{s.body}</p>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .showcase {
+    padding: 80px 0;
+    border-top: 1px solid var(--border-soft);
+  }
+
+  .showcase__head {
+    max-width: 620px;
+    margin-bottom: 48px;
+  }
+
+  .showcase__title {
+    font-size: clamp(30px, 4vw, 42px);
+    line-height: 1.1;
+    margin-top: 10px;
+  }
+
+  .showcase__lede {
+    margin-top: 12px;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--fg-muted);
+  }
+
+  .showcase__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  .shot {
+    margin: 0;
+  }
+
+  .shot__frame {
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-window);
+    border: 1px solid var(--border);
+    box-shadow:
+      0 30px 80px -30px rgba(0, 0, 0, 0.6),
+      0 10px 30px -10px rgba(0, 0, 0, 0.3);
+    transition:
+      transform 250ms ease,
+      box-shadow 250ms ease;
+  }
+
+  .shot__frame:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 40px 100px -30px rgba(0, 0, 0, 0.7),
+      0 15px 35px -10px rgba(0, 0, 0, 0.35);
+  }
+
+  .shot__frame img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .shot__title {
+    font-size: 16px;
+    margin: 18px 0 4px;
+  }
+
+  .shot__body {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--fg-muted);
+  }
+
+  @media (max-width: 880px) {
+    .showcase__grid {
+      grid-template-columns: 1fr;
+    }
+    .showcase {
+      padding: 56px 0;
+    }
+  }
+</style>

@@ -1,0 +1,211 @@
+---
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Recall — A clipboard that remembers, and finds, anything.",
+  description = "Local-first clipboard manager. Fuzzy + semantic search across text, code, images, colors, and links. Native on macOS, Windows, Linux.",
+} = Astro.props;
+
+const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, "");
+const ogImage = `${baseUrl}/media/library-image-filter.png`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href={`${baseUrl}/logo.png`} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body>
+    <slot />
+    <style is:global>
+      :root {
+        --accent-hue: 265;
+        --accent: oklch(62% 0.19 var(--accent-hue));
+        --accent-soft: oklch(38% 0.14 var(--accent-hue) / 0.35);
+        --accent-ink: oklch(78% 0.12 var(--accent-hue));
+
+        --bg-root: oklch(13% 0.006 250);
+        --bg-window: oklch(18% 0.006 250);
+        --bg-surface: oklch(20% 0.006 250 / 0.5);
+        --bg-surface-alt: oklch(22% 0.006 250 / 0.7);
+
+        --fg: oklch(96% 0.005 250);
+        --fg-muted: oklch(75% 0.008 250);
+        --fg-faint: oklch(58% 0.008 250);
+
+        --border: oklch(34% 0.006 250);
+        --border-soft: oklch(28% 0.006 250);
+
+        --aurora: radial-gradient(
+            1200px 600px at 15% -10%,
+            oklch(28% 0.06 var(--accent-hue) / 0.55),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 500px at 110% 30%,
+            oklch(26% 0.05 calc(var(--accent-hue) + 80) / 0.4),
+            transparent 55%
+          ),
+          var(--bg-root);
+
+        --font-ui: "Geist", -apple-system, BlinkMacSystemFont, "Inter", system-ui,
+          sans-serif;
+        --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular,
+          Menlo, monospace;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: var(--aurora);
+        color: var(--fg);
+        font-family: var(--font-ui);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: "ss01", "cv11";
+        letter-spacing: -0.01em;
+        min-height: 100%;
+      }
+
+      body {
+        background-attachment: fixed;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      img,
+      video {
+        max-width: 100%;
+        display: block;
+      }
+
+      ::selection {
+        background: oklch(62% 0.19 var(--accent-hue) / 0.4);
+      }
+
+      .container {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      .mono {
+        font-family: var(--font-mono);
+      }
+
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--accent-ink);
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 18px;
+        font-family: var(--font-ui);
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition:
+          background 150ms ease,
+          border-color 150ms ease,
+          transform 150ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+      }
+
+      .button--primary {
+        background: var(--accent);
+        color: #fff;
+      }
+
+      .button--primary:hover {
+        background: oklch(67% 0.21 var(--accent-hue));
+      }
+
+      .button--ghost {
+        background: transparent;
+        border-color: var(--border);
+        color: var(--fg);
+      }
+
+      .button--ghost:hover {
+        border-color: var(--accent);
+        color: var(--accent-ink);
+      }
+
+      .kbd {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 6px;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--fg-muted);
+        background: var(--bg-surface-alt);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        line-height: 1;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        letter-spacing: -0.03em;
+        font-weight: 600;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      @media (max-width: 720px) {
+        .container {
+          padding: 0 18px;
+        }
+      }
+    </style>
+  </body>
+</html>
