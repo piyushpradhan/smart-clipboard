@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useImageUrl } from "../hooks/useImageUrl";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
 import { CATEGORIES, CATEGORY_META } from "../lib/category";
@@ -49,7 +50,7 @@ interface ListRowProps {
   onClick: () => void;
   onDouble: () => void;
   query: string;
-  getImage?: (id: string) => Promise<{ width: number; height: number; data: Uint8Array } | null>;
+  getImage?: (id: string) => Promise<Blob | null>;
 }
 
 interface SemanticBannerProps {
@@ -161,6 +162,9 @@ function SemanticBanner({
   );
 }
 
+// Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
+const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
+
 function ListRow({
   t,
   item,
@@ -171,7 +175,7 @@ function ListRow({
   onDouble,
   query,
   getImage,
-}: ListRowProps & { getImage?: (id: string) => Promise<{ width: number; height: number; data: Uint8Array } | null> }) {
+}: ListRowProps) {
   const isMono =
     item.category === "code" ||
     item.category === "url" ||
@@ -181,27 +185,8 @@ function ListRow({
     item.category === "phone" ||
     item.category === "number";
   const isImage = item.category === "image";
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isImage || !getImage) return;
-    let cancelled = false;
-    getImage(item.id).then((img) => {
-      if (cancelled || !img) return;
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.min(img.width, 120);
-      canvas.height = Math.min(img.height, 60);
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        const imgData = new ImageData(new Uint8ClampedArray(img.data), img.width, img.height);
-        ctx.putImageData(imgData, 0, 0);
-        setImageUrl(canvas.toDataURL());
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [item.id, isImage, getImage]);
+  // Pass empty string for non-image items — useImageUrl skips fetching.
+  const imageUrl = useImageUrl(isImage ? item.id : "", getImage ?? NO_IMAGE);
 
   return (
     <div
