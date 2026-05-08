@@ -6,6 +6,9 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::categorize::{categorize, make_preview};
 use crate::db::Db;
 
+/// Hard cap: skip images larger than this to avoid unbounded memory / storage.
+const MAX_PIXELS: usize = 50_000_000;
+
 pub fn spawn(app: AppHandle) {
     std::thread::spawn(move || {
         let mut cb = match Clipboard::new() {
@@ -24,7 +27,7 @@ pub fn spawn(app: AppHandle) {
             #[cfg(target_os = "windows")]
             {
                 if let Ok(img) = cb.get_image() {
-                    let hash = simple_hash(&img);
+                    let hash = image_hash(&img);
                     if last_image_hash != Some(hash) {
                         last_image_hash = Some(hash);
                         let source = active_window_title();
@@ -52,14 +55,60 @@ pub fn spawn(app: AppHandle) {
     });
 }
 
-fn simple_hash(img: &ImageData) -> u64 {
-    // Simple hash based on dimensions and first/last bytes
-    let mut hash = (img.width as u64) * 31 + (img.height as u64) * 37;
-    if !img.bytes.is_empty() {
-        hash ^= img.bytes[0] as u64;
-        hash ^= img.bytes[img.bytes.len() - 1] as u64;
+/// Samples bytes spread across the image for collision-resistant hashing.
+/// The old approach (first + last byte + dimensions) had obvious failure modes;
+/// this samples up to 64 evenly-spaced bytes which is fast and much harder to
+/// accidentally collide.
+fn image_hash(img: &ImageData) -> u64 {
+    let b = &img.bytes;
+    let n = b.len();
+    let mut h = (img.width as u64)
+        .wrapping_mul(0x9e3779b97f4a7c15)
+        ^ (img.height as u64).wrapping_mul(0x6c62272e07bb0142);
+    if n == 0 {
+        return h;
     }
-    hash
+    let step = (n / 64).max(1);
+    for (pos, i) in (0..n).step_by(step).take(64).enumerate() {
+        h ^= (b[i] as u64)
+            .wrapping_mul((pos as u64 + 1).wrapping_mul(0x517cc1b727220a95));
+    }
+    h
+}
+
+/// Encodes raw RGBA pixels from arboard into a PNG byte vector.
+/// Returns an error rather than panicking on malformed input.
+pub fn encode_as_png(img: &ImageData) -> Result<Vec<u8>, String> {
+    use image::{ImageBuffer, Rgba};
+
+    let pixels = img.width * img.height;
+    if pixels > MAX_PIXELS {
+        return Err(format!(
+            "Image too large ({pixels} px, limit {MAX_PIXELS})"
+        ));
+    }
+    let expected = pixels * 4;
+    if img.bytes.len() != expected {
+        return Err(format!(
+            "RGBA length mismatch: expected {expected}, got {}",
+            img.bytes.len()
+        ));
+    }
+
+    let buf = ImageBuffer::<Rgba<u8>, _>::from_raw(
+        img.width as u32,
+        img.height as u32,
+        img.bytes.to_vec(),
+    )
+    .ok_or("ImageBuffer creation failed")?;
+
+    let mut png = Vec::new();
+    buf.write_to(
+        &mut std::io::Cursor::new(&mut png),
+        image::ImageFormat::Png,
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(png)
 }
 
 #[cfg(windows)]
@@ -110,17 +159,19 @@ fn insert_text_and_emit(app: &AppHandle, text: &str, source: Option<String>) {
 }
 
 fn insert_image_and_emit(app: &AppHandle, img: &ImageData, source: Option<String>) {
-    // Store raw RGBA bytes with width/height prefix
-    let mut data = Vec::with_capacity(8 + img.bytes.len());
-    data.extend_from_slice(&(img.width as u32).to_le_bytes());
-    data.extend_from_slice(&(img.height as u32).to_le_bytes());
-    data.extend_from_slice(&img.bytes);
+    let png = match encode_as_png(img) {
+        Ok(p) => p,
+        Err(e) => {
+            eprintln!("[watcher] PNG encode failed: {e}");
+            return;
+        }
+    };
 
     let preview = format!("{}×{} image", img.width, img.height);
     let db: Arc<Db> = app.state::<Arc<Db>>().inner().clone();
     let id = {
         let conn = db.0.lock().unwrap();
-        match crate::db::insert_image_item(&conn, &data, &preview, source.as_deref()) {
+        match crate::db::insert_image_item(&conn, &png, &preview, source.as_deref()) {
             Ok(id) => id,
             Err(err) => {
                 eprintln!("[watcher] insert image failed: {err}");
