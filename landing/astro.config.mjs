@@ -2,8 +2,8 @@ import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://recall.pages.dev',
+  site: 'https://recall.vercel.app',
   build: {
-    assets: 'assets',
+    inlineStylesheets: 'always',
   },
 });
