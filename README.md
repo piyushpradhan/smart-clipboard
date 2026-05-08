@@ -14,6 +14,30 @@
 
 ---
 
+## Image Copy & Paste
+
+Copy any image — screenshots, photos, diagrams — and Recall captures it automatically. Open the palette, find it by description, and paste it back in one keystroke.
+
+<video src="public/recordings/image-copy-paste.webm" autoplay loop muted playsinline width="100%"></video>
+
+### Quick-access palette with image preview
+
+Press `Ctrl+Shift+Space`, type a description, and your image appears instantly in the preview pane — full resolution, ready to paste.
+
+<p align="center">
+  <img src="public/screenshots/palette-image-preview.png" alt="Recall palette showing an aurora borealis image selected with full preview" width="760">
+</p>
+
+### Library view with image category filter
+
+Browse and manage all your captured images in one place. Filter by the **Image** category, see thumbnails at a glance, and open any image full-size in the preview pane.
+
+<p align="center">
+  <img src="public/screenshots/library-image-filter.png" alt="Recall library filtered to the Image category, showing thumbnail list and full preview" width="920">
+</p>
+
+---
+
 ## What's Recall?
 
 Recall is a local-first clipboard history manager for **Windows, Linux, and macOS**. It captures everything you copy, categorizes it automatically, and lets you find it again with either fuzzy search or AI-powered semantic search.
@@ -33,7 +57,8 @@ The entire "find → paste" loop takes under five seconds. Semantic search works
 ## Features
 
 - **Silent auto-capture** — every copy lands in history within 500ms
-- **Auto-categorization** — clips sorted into `code`, `url`, `email`, `phone`, `color`, `path`, `text`, `address`, or `number`
+- **Image capture & paste** — screenshots and images captured automatically; full-resolution preview and one-key paste-back
+- **Auto-categorization** — clips sorted into `code`, `url`, `email`, `phone`, `color`, `path`, `text`, `address`, `number`, or `image`
 - **Semantic search out of the box** — bundled ONNX model (~130 MB) runs entirely on-device. No API key needed.
 - **Fuzzy search** — keystroke-level fast, SQLite FTS5 with BM25 ranking
 - **Hybrid results** — semantic + fuzzy mixed via Reciprocal-Rank-Fusion
@@ -105,7 +130,6 @@ Recall is being built in public. Things may break. Features may change. We're sh
 - Documentation improving daily
 
 **Coming soon:**
-- Better image handling
 - Sync across devices (local network option)
 - More category heuristics
 - Plugin/extension API
