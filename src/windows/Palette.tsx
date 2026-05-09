@@ -12,6 +12,9 @@ import { useImageUrl } from "../hooks/useImageUrl";
 import { CategoryChip, Kbd } from "../components/Primitives";
 import { ItemBody } from "../components/Primitives";
 
+// Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
+const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
+
 function ImagePreview({
   t,
   item,
@@ -33,6 +36,196 @@ function ImagePreview({
       alt={item.preview}
       style={{ maxWidth: "100%", maxHeight: 280, borderRadius: 8, background: t.bgSurfaceAlt }}
     />
+  );
+}
+
+interface PaletteRowProps {
+  t: Theme;
+  item: ClipItem;
+  index: number;
+  selected: boolean;
+  query: string;
+  showLabels: boolean;
+  categoryMode: CategoryDisplay;
+  getImage: (id: string) => Promise<Blob | null>;
+  onMouseEnter: () => void;
+  onClick: () => void;
+}
+
+function PaletteRow({
+  t,
+  item,
+  index,
+  selected,
+  query,
+  showLabels,
+  categoryMode,
+  getImage,
+  onMouseEnter,
+  onClick,
+}: PaletteRowProps) {
+  const isImage = item.category === "image";
+  const imageUrl = useImageUrl(isImage ? item.id : "", isImage ? getImage : NO_IMAGE);
+
+  return (
+    <div
+      data-i={index}
+      onMouseEnter={onMouseEnter}
+      onClick={onClick}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: `${t.dense ? 7 : 10}px 12px`,
+        borderRadius: 8,
+        background: selected ? t.bgSelected : "transparent",
+        cursor: "pointer",
+        position: "relative",
+      }}
+    >
+      {categoryMode === "chip" && (
+        <CategoryChip t={t} cat={item.category} mode="chip" />
+      )}
+      {categoryMode === "icon" && (
+        <CategoryChip t={t} cat={item.category} mode="icon" />
+      )}
+      {categoryMode === "dot" && (
+        <CategoryChip t={t} cat={item.category} mode="dot" />
+      )}
+
+      {isImage && (
+        <div
+          style={{
+            width: 44,
+            height: 32,
+            borderRadius: 4,
+            background: t.bgSurfaceAlt,
+            border: `1px solid ${t.borderSoft}`,
+            overflow: "hidden",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={item.preview}
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+              }}
+            />
+          ) : null}
+        </div>
+      )}
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {showLabels && (
+          <div
+            style={{
+              fontSize: t.dense ? 13.5 : 14.5,
+              fontWeight: item.labelGenerated ? 500 : 400,
+              fontStyle: item.labelGenerated ? "normal" : "italic",
+              color: item.labelGenerated ? t.fg : t.fgMuted,
+              letterSpacing: -0.1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+            title={item.labelGenerated ? undefined : "Awaiting AI label"}
+          >
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+              {highlightMatch(t, item.label, query)}
+            </span>
+            {!item.labelGenerated && (
+              <span
+                aria-hidden="true"
+                style={{
+                  fontSize: 9,
+                  color: t.fgFaint,
+                  letterSpacing: 1,
+                  flexShrink: 0,
+                }}
+              >
+                ···
+              </span>
+            )}
+          </div>
+        )}
+        <div
+          style={{
+            fontFamily:
+              item.category === "text" || item.category === "address"
+                ? t.fontUi
+                : t.fontMono,
+            fontSize: showLabels
+              ? t.dense
+                ? 11.5
+                : 12
+              : t.dense
+                ? 13
+                : 13.5,
+            color: showLabels ? t.fgMuted : t.fg,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            marginTop: showLabels ? 2 : 0,
+          }}
+        >
+          {item.preview}
+        </div>
+      </div>
+
+      {item.pinned && (
+        <span style={{ color: t.accent, fontSize: 11, flexShrink: 0 }}>★</span>
+      )}
+      {item.category === "color" && (
+        <div
+          style={{
+            width: 18,
+            height: 18,
+            borderRadius: 4,
+            background: item.content,
+            border: `1px solid ${t.borderSoft}`,
+            flexShrink: 0,
+          }}
+        />
+      )}
+
+      <div
+        style={{
+          fontSize: 11,
+          color: t.fgFaint,
+          fontFamily: t.fontMono,
+          minWidth: 42,
+          textAlign: "right",
+          flexShrink: 0,
+        }}
+      >
+        {relTime(item.minutesAgo)}
+      </div>
+
+      {selected && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            flexShrink: 0,
+          }}
+        >
+          <Kbd t={t} accent>
+            ↵
+          </Kbd>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -362,160 +555,24 @@ export function Palette({
               )}
             </div>
           )}
-          {displayResults.map((item, i) => {
-            const isSel = i === selected;
-            return (
-              <div
-                key={item.id}
-                data-i={i}
-                onMouseEnter={() => setSelected(i)}
-                onClick={() => {
-                  app.copyItem(item.id);
-                  onClose();
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 14,
-                  padding: `${t.dense ? 7 : 10}px 12px`,
-                  borderRadius: 8,
-                  background: isSel ? t.bgSelected : "transparent",
-                  cursor: "pointer",
-                  position: "relative",
-                }}
-              >
-                {categoryMode === "chip" && (
-                  <CategoryChip t={t} cat={item.category} mode="chip" />
-                )}
-                {categoryMode === "icon" && (
-                  <CategoryChip t={t} cat={item.category} mode="icon" />
-                )}
-                {categoryMode === "dot" && (
-                  <CategoryChip t={t} cat={item.category} mode="dot" />
-                )}
-
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {showLabels && (
-                    <div
-                      style={{
-                        fontSize: t.dense ? 13.5 : 14.5,
-                        fontWeight: item.labelGenerated ? 500 : 400,
-                        fontStyle: item.labelGenerated ? "normal" : "italic",
-                        color: item.labelGenerated ? t.fg : t.fgMuted,
-                        letterSpacing: -0.1,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
-                      title={
-                        item.labelGenerated ? undefined : "Awaiting AI label"
-                      }
-                    >
-                      <span
-                        style={{
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {highlightMatch(t, item.label, query)}
-                      </span>
-                      {!item.labelGenerated && (
-                        <span
-                          aria-hidden="true"
-                          style={{
-                            fontSize: 9,
-                            color: t.fgFaint,
-                            letterSpacing: 1,
-                            flexShrink: 0,
-                          }}
-                        >
-                          ···
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <div
-                    style={{
-                      fontFamily:
-                        item.category === "text" ||
-                        item.category === "address"
-                          ? t.fontUi
-                          : t.fontMono,
-                      fontSize: showLabels
-                        ? t.dense
-                          ? 11.5
-                          : 12
-                        : t.dense
-                          ? 13
-                          : 13.5,
-                      color: showLabels ? t.fgMuted : t.fg,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      marginTop: showLabels ? 2 : 0,
-                    }}
-                  >
-                    {item.preview}
-                  </div>
-                </div>
-
-                {item.pinned && (
-                  <span
-                    style={{
-                      color: t.accent,
-                      fontSize: 11,
-                      flexShrink: 0,
-                    }}
-                  >
-                    ★
-                  </span>
-                )}
-                {item.category === "color" && (
-                  <div
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 4,
-                      background: item.content,
-                      border: `1px solid ${t.borderSoft}`,
-                      flexShrink: 0,
-                    }}
-                  />
-                )}
-
-                <div
-                  style={{
-                    fontSize: 11,
-                    color: t.fgFaint,
-                    fontFamily: t.fontMono,
-                    minWidth: 42,
-                    textAlign: "right",
-                    flexShrink: 0,
-                  }}
-                >
-                  {relTime(item.minutesAgo)}
-                </div>
-
-                {isSel && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Kbd t={t} accent>
-                      ↵
-                    </Kbd>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {displayResults.map((item, i) => (
+            <PaletteRow
+              key={item.id}
+              t={t}
+              item={item}
+              index={i}
+              selected={i === selected}
+              query={query}
+              showLabels={showLabels}
+              categoryMode={categoryMode}
+              getImage={app.getImage}
+              onMouseEnter={() => setSelected(i)}
+              onClick={() => {
+                app.copyItem(item.id);
+                onClose();
+              }}
+            />
+          ))}
         </div>
 
         <div
