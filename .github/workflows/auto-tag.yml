@@ -1,0 +1,64 @@
+name: Auto-tag on version bump
+
+# Watches main for version changes in package.json. When the version differs
+# from the most recent vX.Y.Z tag, creates and pushes a matching tag — which
+# in turn triggers .github/workflows/release.yml to build and publish the
+# cross-platform installers as a GitHub Release.
+#
+# Triggers:
+#   - Every push to main (cheap; short-circuits when version == latest tag)
+#   - Manual dispatch (lets you re-run for the current version if a previous
+#     release attempt failed without leaving a tag behind)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Detect and push release tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          CURRENT=$(jq -r '.version' package.json)
+          if [ -z "$CURRENT" ] || [ "$CURRENT" = "null" ]; then
+            echo "::error::Could not read version from package.json"
+            exit 1
+          fi
+
+          TAG="v$CURRENT"
+
+          # Skip if this tag already exists — either we've already released
+          # this version, or the user manually pushed the tag.
+          if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists — nothing to do."
+            exit 0
+          fi
+
+          # Sanity check: package.json and tauri.conf.json must agree, otherwise
+          # the Tauri build will produce installers with the wrong version
+          # number relative to the GitHub Release.
+          TAURI_VERSION=$(jq -r '.version' src-tauri/tauri.conf.json)
+          if [ "$CURRENT" != "$TAURI_VERSION" ]; then
+            echo "::error::Version mismatch: package.json=$CURRENT, tauri.conf.json=$TAURI_VERSION"
+            exit 1
+          fi
+
+          echo "Creating tag $TAG at $(git rev-parse HEAD)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
