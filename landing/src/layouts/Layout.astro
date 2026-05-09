@@ -9,8 +9,7 @@ const {
   description = "Local-first clipboard manager. Fuzzy + semantic search across text, code, images, colors, and links. Native on macOS, Windows, Linux.",
 } = Astro.props;
 
-const baseUrl = import.meta.env.BASE_URL.replace(/\/$/, "");
-const ogImage = `${baseUrl}/media/library-image-filter.png`;
+const ogImage = "/media/library-image-filter.png";
 ---
 
 <!doctype html>
@@ -18,7 +17,7 @@ const ogImage = `${baseUrl}/media/library-image-filter.png`;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href={`${baseUrl}/logo.png`} />
+    <link rel="icon" type="image/png" href="/logo.png" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta property="og:title" content={title} />
