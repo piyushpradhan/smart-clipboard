@@ -103,6 +103,7 @@ export function Kbd({ t, children, accent = false }: KbdProps) {
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
+        verticalAlign: "middle",
         minWidth: 20,
         height: 20,
         padding: "0 6px",

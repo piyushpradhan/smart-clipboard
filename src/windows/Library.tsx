@@ -674,6 +674,8 @@ export function Library({
             padding: "12px 8px",
             overflow: "auto",
             fontSize: 13,
+            display: "flex",
+            flexDirection: "column",
           }}
         >
           <SidebarRow
@@ -880,6 +882,7 @@ export function Library({
               }
               style={{
                 flex: 1,
+                minWidth: 0,
                 fontSize: 13.5,
                 fontFamily: t.fontUi,
                 background: "transparent",
@@ -908,6 +911,8 @@ export function Library({
                 cursor: "pointer",
                 letterSpacing: 0.5,
                 textTransform: "uppercase",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
             >
               <span
