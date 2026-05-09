@@ -53,7 +53,7 @@ export function semanticScore(query: string, item: ClipItem): number {
 export function fuzzyMatch(query: string, item: ClipItem): boolean {
   const q = query.toLowerCase().trim();
   if (!q) return true;
-  const hay = `${item.label} ${item.preview} ${item.source}`.toLowerCase();
+  const hay = `${item.label} ${item.preview} ${item.source} ${item.category}`.toLowerCase();
   if (hay.includes(q)) return true;
   let j = 0;
   for (const ch of hay) {

@@ -417,10 +417,11 @@ export function Palette({
         {/* Left pane - Search and List */}
         <div
           style={{
-            flex: "0 0 380",
+            flex: "0 0 380px",
             display: "flex",
             flexDirection: "column",
             borderRight: `1px solid ${t.borderSoft}`,
+            overflow: "hidden",
           }}
         >
           <div
@@ -457,6 +458,7 @@ export function Palette({
               }
               style={{
                 flex: 1,
+                minWidth: 0,
                 fontFamily: t.fontUi,
                 fontSize: 18,
                 fontWeight: 400,
@@ -487,6 +489,8 @@ export function Palette({
                 cursor: "pointer",
                 letterSpacing: 0.5,
                 textTransform: "uppercase",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
               }}
             >
               <span
@@ -588,36 +592,26 @@ export function Palette({
             color: t.fgFaint,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0, overflow: "hidden" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
               <Kbd t={t}>↑↓</Kbd> nav
             </span>
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
               <Kbd t={t}>↵</Kbd> paste
             </span>
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
               <Kbd t={t}>⌘P</Kbd> pin
             </span>
-            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <Kbd t={t}>⌘⌫</Kbd> delete
+            <span style={{ display: "flex", alignItems: "center", gap: 5, flexShrink: 0 }}>
+              <Kbd t={t}>⌘⌫</Kbd> del
             </span>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
             <span>
               {results.length > MAX_VISIBLE
                 ? `${MAX_VISIBLE} of ${results.length}`
                 : results.length}{" "}
               {query ? "matches" : "items"}
-            </span>
-            <span style={{ opacity: 0.5 }}>·</span>
-            <span
-              style={{
-                fontFamily: t.fontMono,
-                color: t.accent,
-                fontWeight: 500,
-              }}
-            >
-              SMART CLIPBOARD
             </span>
           </div>
         </div>
@@ -731,6 +725,7 @@ export function Palette({
               <div
                 style={{
                   display: "flex",
+                  flexWrap: "wrap",
                   gap: 8,
                   padding: "10px 14px",
                   borderTop: `1px solid ${t.borderSoft}`,
