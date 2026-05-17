@@ -25,6 +25,7 @@ export function SidebarRow({ t, active, onClick, children }: SidebarRowProps) {
         marginBottom: 1,
         borderLeft: `2px solid ${active ? t.accent : "transparent"}`,
         paddingLeft: 8,
+        transition: "background var(--duration-fast) var(--easing-standard)",
       }}
     >
       {children}

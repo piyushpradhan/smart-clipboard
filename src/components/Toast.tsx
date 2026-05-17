@@ -1,3 +1,4 @@
+import { Button } from "ember-design-system";
 import type { Theme, Toast as ToastType, ToastKind } from "../lib/types";
 
 const ICON: Record<ToastKind, string> = {
@@ -21,19 +22,19 @@ export function Toast({ t, toast }: ToastProps) {
         left: "50%",
         transform: "translateX(-50%)",
         padding: "10px 16px",
-        background: "rgba(30,30,36,0.96)",
-        color: "#fff",
+        background: t.bgSurface,
+        color: t.fg,
         borderRadius: 999,
         fontSize: 12.5,
         fontWeight: 500,
         display: "flex",
         alignItems: "center",
         gap: 10,
-        boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+        boxShadow: "var(--shadow-md)",
         fontFamily: t.fontUi,
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: `1px solid ${t.border}`,
         zIndex: 1000,
-        animation: "toastIn 180ms ease",
+        animation: "toastIn 180ms var(--easing-standard)",
       }}
     >
       <span
@@ -42,6 +43,7 @@ export function Toast({ t, toast }: ToastProps) {
           height: 18,
           borderRadius: 999,
           background: t.accent,
+          color: t.accentTextOn,
           display: "grid",
           placeItems: "center",
           fontSize: 11,
@@ -52,23 +54,9 @@ export function Toast({ t, toast }: ToastProps) {
       </span>
       <span>{toast.msg}</span>
       {toast.undo && (
-        <button
-          onClick={toast.undo}
-          style={{
-            marginLeft: 6,
-            padding: "2px 10px",
-            background: "transparent",
-            color: t.accent,
-            border: `1px solid ${t.accent}`,
-            borderRadius: 999,
-            fontSize: 11,
-            fontWeight: 600,
-            fontFamily: t.fontUi,
-            cursor: "pointer",
-          }}
-        >
+        <Button size="sm" variant="ghost" onClick={toast.undo}>
           Undo
-        </button>
+        </Button>
       )}
       <style>{`
         @keyframes toastIn {

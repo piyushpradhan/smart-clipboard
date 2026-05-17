@@ -1,3 +1,5 @@
+import { IconButton } from "ember-design-system";
+import { X } from "lucide-react";
 import type { Theme } from "../lib/types";
 import { Kbd } from "./Primitives";
 
@@ -23,7 +25,7 @@ export function ShortcutHint({ t, onDismiss }: ShortcutHintProps) {
         display: "flex",
         alignItems: "center",
         gap: 10,
-        boxShadow: "0 12px 40px rgba(0,0,0,0.3)",
+        boxShadow: "var(--shadow-md)",
         zIndex: 400,
       }}
     >
@@ -38,22 +40,13 @@ export function ShortcutHint({ t, onDismiss }: ShortcutHintProps) {
         V
       </Kbd>
       <span style={{ color: t.fgMuted }}>anywhere to open</span>
-      <button
-        onClick={onDismiss}
-        style={{
-          marginLeft: 8,
-          padding: "2px 8px",
-          background: "transparent",
-          color: t.fgFaint,
-          border: "none",
-          fontSize: 14,
-          cursor: "pointer",
-          lineHeight: 1,
-        }}
+      <IconButton
         aria-label="Dismiss"
-      >
-        ✕
-      </button>
+        icon={<X size={14} />}
+        variant="ghost"
+        size="sm"
+        onClick={onDismiss}
+      />
     </div>
   );
 }

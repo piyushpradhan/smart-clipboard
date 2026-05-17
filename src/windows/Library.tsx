@@ -1,14 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useImageUrl } from "../hooks/useImageUrl";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { listen } from "@tauri-apps/api/event";
-import { CATEGORIES, CATEGORY_META } from "../lib/category";
-import {
-  groupByTime,
-  highlightMatch,
-  searchItems,
-} from "../lib/search";
-import { relTime } from "../lib/time";
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useImageUrl } from '../hooks/useImageUrl';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { listen } from '@tauri-apps/api/event';
+import { CATEGORIES, CATEGORY_META } from '../lib/category';
+import { groupByTime, highlightMatch, searchItems } from '../lib/search';
+import { relTime } from '../lib/time';
 import type {
   Category,
   CategoryDisplay,
@@ -18,11 +14,12 @@ import type {
   SearchMode,
   Theme,
   TimeFilter,
-} from "../lib/types";
-import type { AppState } from "../hooks/useAppState";
-import { CategoryChip, Kbd } from "../components/Primitives";
-import { PreviewPane } from "../components/PreviewPane";
-import { SidebarRow } from "../components/SidebarRow";
+} from '../lib/types';
+import type { AppState } from '../hooks/useAppState';
+import { Button } from 'ember-design-system';
+import { CategoryChip, Kbd } from '../components/Primitives';
+import { PreviewPane } from '../components/PreviewPane';
+import { SidebarRow } from '../components/SidebarRow';
 
 interface LibraryProps {
   t: Theme;
@@ -68,19 +65,13 @@ interface SemanticBannerProps {
  * - error → failure text with the underlying message
  * - success → count + "ranked by intent"
  */
-function SemanticBanner({
-  t,
-  count,
-  available,
-  error,
-  loading,
-}: SemanticBannerProps) {
+function SemanticBanner({ t, count, available, error, loading }: SemanticBannerProps) {
   const base = {
-    padding: "6px 12px",
+    padding: '6px 12px',
     fontSize: 11,
     fontFamily: t.fontMono,
-    display: "flex" as const,
-    alignItems: "center" as const,
+    display: 'flex' as const,
+    alignItems: 'center' as const,
     gap: 8,
     borderBottom: `1px solid ${t.borderSoft}`,
   };
@@ -92,13 +83,11 @@ function SemanticBanner({
             width: 5,
             height: 5,
             borderRadius: 999,
-            background: "#c94b3a",
+            background: '#c94b3a',
           }}
         />
         <span style={{ fontWeight: 500 }}>Semantic search is off</span>
-        <span style={{ opacity: 0.7 }}>
-          configure a provider in the AI panel
-        </span>
+        <span style={{ opacity: 0.7 }}>configure a provider in the AI panel</span>
       </div>
     );
   }
@@ -110,16 +99,16 @@ function SemanticBanner({
             width: 5,
             height: 5,
             borderRadius: 999,
-            background: "#c94b3a",
+            background: '#c94b3a',
           }}
         />
         <span style={{ fontWeight: 500 }}>Semantic search failed</span>
         <span
           style={{
             opacity: 0.75,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
           }}
         >
           {error}
@@ -155,7 +144,7 @@ function SemanticBanner({
         }}
       />
       <span style={{ fontWeight: 500 }}>
-        {count} semantic match{count === 1 ? "" : "es"}
+        {count} semantic match{count === 1 ? '' : 'es'}
       </span>
       <span style={{ opacity: 0.6 }}>ranked by intent</span>
     </div>
@@ -177,16 +166,16 @@ function ListRow({
   getImage,
 }: ListRowProps) {
   const isMono =
-    item.category === "code" ||
-    item.category === "url" ||
-    item.category === "color" ||
-    item.category === "path" ||
-    item.category === "email" ||
-    item.category === "phone" ||
-    item.category === "number";
-  const isImage = item.category === "image";
+    item.category === 'code' ||
+    item.category === 'url' ||
+    item.category === 'color' ||
+    item.category === 'path' ||
+    item.category === 'email' ||
+    item.category === 'phone' ||
+    item.category === 'number';
+  const isImage = item.category === 'image';
   // Pass empty string for non-image items — useImageUrl skips fetching.
-  const imageUrl = useImageUrl(isImage ? item.id : "", getImage ?? NO_IMAGE);
+  const imageUrl = useImageUrl(isImage ? item.id : '', getImage ?? NO_IMAGE);
 
   return (
     <div
@@ -196,33 +185,25 @@ function ListRow({
       style={{
         padding: `${t.dense ? 7 : 10}px 10px`,
         borderRadius: 6,
-        background: selected ? t.bgSelected : "transparent",
-        cursor: "pointer",
-        position: "relative",
-        borderLeft: `3px solid ${selected ? t.accent : "transparent"}`,
+        background: selected ? t.bgSelected : 'transparent',
+        cursor: 'pointer',
+        position: 'relative',
+        borderLeft: `3px solid ${selected ? t.accent : 'transparent'}`,
         paddingLeft: 8,
       }}
     >
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
+          display: 'flex',
+          alignItems: 'center',
           gap: 8,
           marginBottom: 2,
         }}
       >
-        {categoryMode === "chip" && (
-          <CategoryChip t={t} cat={item.category} mode="mono" />
-        )}
-        {categoryMode === "icon" && (
-          <CategoryChip t={t} cat={item.category} mode="icon" />
-        )}
-        {categoryMode === "dot" && (
-          <CategoryChip t={t} cat={item.category} mode="dot" />
-        )}
-        {item.pinned && (
-          <span style={{ color: t.accent, fontSize: 10 }}>★</span>
-        )}
+        {categoryMode === 'chip' && <CategoryChip t={t} cat={item.category} mode="mono" />}
+        {categoryMode === 'icon' && <CategoryChip t={t} cat={item.category} mode="icon" />}
+        {categoryMode === 'dot' && <CategoryChip t={t} cat={item.category} mode="dot" />}
+        {item.pinned && <span style={{ color: t.accent, fontSize: 10 }}>★</span>}
         <span style={{ flex: 1 }} />
         <span
           style={{
@@ -239,20 +220,20 @@ function ListRow({
           style={{
             fontSize: t.dense ? 12.5 : 13.5,
             fontWeight: item.labelGenerated ? 500 : 400,
-            fontStyle: item.labelGenerated ? "normal" : "italic",
+            fontStyle: item.labelGenerated ? 'normal' : 'italic',
             color: item.labelGenerated ? t.fg : t.fgMuted,
             marginBottom: 2,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
             letterSpacing: -0.1,
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 6,
           }}
-          title={item.labelGenerated ? undefined : "Awaiting AI label"}
+          title={item.labelGenerated ? undefined : 'Awaiting AI label'}
         >
-          <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {highlightMatch(t, item.label, query)}
           </span>
           {!item.labelGenerated && (
@@ -275,9 +256,9 @@ function ListRow({
           fontFamily: isMono ? t.fontMono : t.fontUi,
           fontSize: 11.5,
           color: t.fgMuted,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
         }}
       >
         {isImage ? (
@@ -288,7 +269,7 @@ function ListRow({
               style={{
                 height: 40,
                 borderRadius: 4,
-                objectFit: "contain",
+                objectFit: 'contain',
                 background: t.bgSurfaceAlt,
               }}
             />
@@ -311,21 +292,21 @@ export function Library({
   app,
   semanticAvailable,
   anthropicEnabled,
-  initialQuery = "",
-  initialMode = "fuzzy",
-  initialFilter = "all",
+  initialQuery = '',
+  initialMode = 'fuzzy',
+  initialFilter = 'all',
   initialSelectedId = null,
   initialEditing = false,
 }: LibraryProps) {
   const [query, setQuery] = useState(initialQuery);
   const [mode, setMode] = useState<SearchMode>(initialMode);
   const [filter, setFilter] = useState<Filter>(initialFilter);
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
   const [selectedId, setSelectedId] = useState<string | null>(
-    initialSelectedId ?? app.items[0]?.id ?? null,
+    initialSelectedId ?? app.items[0]?.id ?? null
   );
   const [editingId, setEditingId] = useState<string | null>(
-    initialEditing ? (initialSelectedId ?? app.items[0]?.id ?? null) : null,
+    initialEditing ? (initialSelectedId ?? app.items[0]?.id ?? null) : null
   );
   const [localPreview, setLocalPreview] = useState<PreviewMode>(previewMode);
 
@@ -337,24 +318,24 @@ export function Library({
   // filter (e.g. "Show Pinned"). We accept any known Filter string; unknown
   // payloads are ignored so future expansion can't crash the UI.
   useEffect(() => {
-    const unlisten = listen<string>("library-filter", (ev) => {
+    const unlisten = listen<string>('library-filter', (ev) => {
       const payload = ev.payload;
       const allowed: Filter[] = [
-        "all",
-        "pinned",
-        "code",
-        "url",
-        "email",
-        "phone",
-        "color",
-        "path",
-        "text",
-        "address",
-        "number",
+        'all',
+        'pinned',
+        'code',
+        'url',
+        'email',
+        'phone',
+        'color',
+        'path',
+        'text',
+        'address',
+        'number',
       ];
       if (allowed.includes(payload as Filter)) {
         setFilter(payload as Filter);
-        setQuery("");
+        setQuery('');
       }
     });
     return () => {
@@ -367,29 +348,29 @@ export function Library({
 
   const filterStage = useMemo(() => {
     let items = app.items;
-    if (filter === "pinned") {
+    if (filter === 'pinned') {
       items = items.filter((i) => i.pinned);
-    } else if (filter !== "all") {
+    } else if (filter !== 'all') {
       items = items.filter((i) => i.category === filter);
     }
-    if (timeFilter !== "all") {
+    if (timeFilter !== 'all') {
       const now = Date.now();
       const minute = 60 * 1000;
       const day = 24 * 60 * minute;
       items = items.filter((i) => {
         const age = i.minutesAgo * minute;
         switch (timeFilter) {
-          case "today":
+          case 'today':
             return now - age < day;
-          case "yesterday": {
+          case 'yesterday': {
             const yesterdayStart = now - day;
             const yesterdayEnd = now;
             const itemTime = now - age;
             return itemTime >= yesterdayStart && itemTime < yesterdayEnd;
           }
-          case "week":
+          case 'week':
             return age < 7 * day;
-          case "month":
+          case 'month':
             return age < 30 * day;
           default:
             return true;
@@ -403,7 +384,7 @@ export function Library({
   const [semanticError, setSemanticError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (mode !== "semantic" || !query.trim()) {
+    if (mode !== 'semantic' || !query.trim()) {
       setSemanticResults(null);
       setSemanticError(null);
       return;
@@ -427,12 +408,7 @@ export function Library({
         })
         .catch((err: unknown) => {
           if (cancelled) return;
-          const msg =
-            err instanceof Error
-              ? err.message
-              : typeof err === "string"
-                ? err
-                : "failed";
+          const msg = err instanceof Error ? err.message : typeof err === 'string' ? err : 'failed';
           setSemanticError(msg);
           setSemanticResults([]);
         });
@@ -444,7 +420,7 @@ export function Library({
   }, [query, mode, app, semanticAvailable]);
 
   const searched = useMemo(() => {
-    if (mode === "semantic") {
+    if (mode === 'semantic') {
       if (!query.trim()) return filterStage;
       if (semanticResults === null) return filterStage;
       const allowed = new Set(filterStage.map((i) => i.id));
@@ -464,7 +440,7 @@ export function Library({
     return c;
   }, [app.items]);
 
-  const showGroups = !query && filter === "all";
+  const showGroups = !query && filter === 'all';
   const groups = useMemo(() => groupByTime(searched), [searched]);
 
   useEffect(() => {
@@ -482,56 +458,56 @@ export function Library({
     if (item) setSelectedId(item.id);
     setTimeout(() => {
       const el = listRef.current?.querySelector(`[data-id="${item?.id}"]`);
-      (el as HTMLElement | undefined)?.scrollIntoView?.({ block: "nearest" });
+      (el as HTMLElement | undefined)?.scrollIntoView?.({ block: 'nearest' });
     }, 0);
   };
 
   const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (editingId) return;
     const inSearch = document.activeElement === searchRef.current;
-    if (e.key === "Escape") {
-      if (query) setQuery("");
+    if (e.key === 'Escape') {
+      if (query) setQuery('');
       else searchRef.current?.blur();
       return;
     }
-    if (e.key === "/" && !inSearch) {
+    if (e.key === '/' && !inSearch) {
       e.preventDefault();
       searchRef.current?.focus();
       return;
     }
-    if (inSearch && e.key === "Enter") {
+    if (inSearch && e.key === 'Enter') {
       e.preventDefault();
-      if (mode === "fuzzy") setMode("semantic");
+      if (mode === 'fuzzy') setMode('semantic');
       else if (current) app.copyItem(current.id);
       return;
     }
-    if (inSearch && e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    if (inSearch && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
 
-    if (e.key === "ArrowDown" || e.key === "j") {
+    if (e.key === 'ArrowDown' || e.key === 'j') {
       e.preventDefault();
       moveSel(1);
-    } else if (e.key === "ArrowUp" || e.key === "k") {
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
       e.preventDefault();
       moveSel(-1);
-    } else if (e.key === "Enter") {
+    } else if (e.key === 'Enter') {
       e.preventDefault();
       if (current) app.copyItem(current.id);
-    } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "p") {
+    } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
       if (current) app.pinItem(current.id);
-    } else if (e.key === "Backspace" || e.key === "Delete") {
+    } else if (e.key === 'Backspace' || e.key === 'Delete') {
       e.preventDefault();
       if (current) app.deleteItem(current.id);
-    } else if (e.key.toLowerCase() === "e" && !inSearch) {
+    } else if (e.key.toLowerCase() === 'e' && !inSearch) {
       e.preventDefault();
       if (current) setEditingId(current.id);
-    } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "i") {
+    } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'i') {
       e.preventDefault();
-      setLocalPreview((p) => (p === "split" ? "inline" : "split"));
-    } else if (e.key >= "1" && e.key <= "9" && !inSearch) {
+      setLocalPreview((p) => (p === 'split' ? 'inline' : 'split'));
+    } else if (e.key >= '1' && e.key <= '9' && !inSearch) {
       e.preventDefault();
       const idx = parseInt(e.key, 10) - 1;
-      const all: Filter[] = ["all", "pinned", ...CATEGORIES];
+      const all: Filter[] = ['all', 'pinned', ...CATEGORIES];
       if (all[idx]) setFilter(all[idx]);
     }
   };
@@ -541,11 +517,11 @@ export function Library({
       tabIndex={0}
       onKeyDown={onKey}
       style={{
-        width: "100%",
-        height: "100%",
-        outline: "none",
-        display: "flex",
-        flexDirection: "column",
+        width: '100%',
+        height: '100%',
+        outline: 'none',
+        display: 'flex',
+        flexDirection: 'column',
         background: t.bgWindow,
         fontFamily: t.fontUi,
         color: t.fg,
@@ -556,19 +532,16 @@ export function Library({
         data-tauri-drag-region
         style={{
           height: 40,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 0 0 14px",
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 0 0 14px',
           borderBottom: `1px solid ${t.borderSoft}`,
           flexShrink: 0,
-          userSelect: "none",
+          userSelect: 'none',
         }}
       >
-        <div
-          data-tauri-drag-region
-          style={{ display: "flex", alignItems: "center", gap: 10 }}
-        >
+        <div data-tauri-drag-region style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div
             data-tauri-drag-region
             style={{
@@ -576,9 +549,9 @@ export function Library({
               height: 14,
               borderRadius: 3,
               background: t.accent,
-              display: "grid",
-              placeItems: "center",
-              color: "#fff",
+              display: 'grid',
+              placeItems: 'center',
+              color: '#fff',
               fontSize: 9,
               fontWeight: 700,
               fontFamily: t.fontMono,
@@ -586,33 +559,30 @@ export function Library({
           >
             ✦
           </div>
-          <div
-            data-tauri-drag-region
-            style={{ fontSize: 12.5, color: t.fgMuted, fontWeight: 500 }}
-          >
+          <div data-tauri-drag-region style={{ fontSize: 12.5, color: t.fgMuted, fontWeight: 500 }}>
             Recall
           </div>
         </div>
-        <div style={{ display: "flex", height: "100%" }}>
+        <div style={{ display: 'flex', height: '100%' }}>
           {(
             [
               [
-                "—",
-                "Minimize",
+                '—',
+                'Minimize',
                 async () => {
                   await getCurrentWindow().minimize();
                 },
               ],
               [
-                "◻",
-                "Maximize",
+                '◻',
+                'Maximize',
                 async () => {
                   await getCurrentWindow().toggleMaximize();
                 },
               ],
               [
-                "✕",
-                "Close",
+                '✕',
+                'Close',
                 async () => {
                   await getCurrentWindow().close();
                 },
@@ -631,29 +601,23 @@ export function Library({
               }}
               style={{
                 width: 46,
-                height: "100%",
-                display: "grid",
-                placeItems: "center",
+                height: '100%',
+                display: 'grid',
+                placeItems: 'center',
                 color: t.fgMuted,
                 fontSize: 11,
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                transition: "background 120ms",
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background 120ms',
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLElement).style.background =
-                  i === 2
-                    ? "#e81123"
-                    : t.dark
-                      ? "rgba(255,255,255,0.08)"
-                      : "rgba(0,0,0,0.06)";
-                if (i === 2)
-                  (e.currentTarget as HTMLElement).style.color = "#fff";
+                  i === 2 ? '#e81123' : t.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+                if (i === 2) (e.currentTarget as HTMLElement).style.color = '#fff';
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  "transparent";
+                (e.currentTarget as HTMLElement).style.background = 'transparent';
                 (e.currentTarget as HTMLElement).style.color = t.fgMuted;
               }}
             >
@@ -664,32 +628,28 @@ export function Library({
       </div>
 
       {/* Main body */}
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* Sidebar */}
         <div
           style={{
             width: 196,
             flexShrink: 0,
             borderRight: `1px solid ${t.borderSoft}`,
-            padding: "12px 8px",
-            overflow: "auto",
+            padding: '12px 8px',
+            overflow: 'auto',
             fontSize: 13,
-            display: "flex",
-            flexDirection: "column",
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
-          <SidebarRow
-            t={t}
-            active={filter === "all"}
-            onClick={() => setFilter("all")}
-          >
+          <SidebarRow t={t} active={filter === 'all'} onClick={() => setFilter('all')}>
             <span
               style={{
                 width: 16,
                 color: t.fgFaint,
                 fontFamily: t.fontMono,
                 fontSize: 13,
-                textAlign: "center",
+                textAlign: 'center',
               }}
             >
               ≡
@@ -705,17 +665,13 @@ export function Library({
               {counts.all}
             </span>
           </SidebarRow>
-          <SidebarRow
-            t={t}
-            active={filter === "pinned"}
-            onClick={() => setFilter("pinned")}
-          >
+          <SidebarRow t={t} active={filter === 'pinned'} onClick={() => setFilter('pinned')}>
             <span
               style={{
                 width: 16,
                 color: t.fgFaint,
                 fontSize: 11,
-                textAlign: "center",
+                textAlign: 'center',
               }}
             >
               ★
@@ -736,10 +692,10 @@ export function Library({
             style={{
               marginTop: 14,
               marginBottom: 4,
-              padding: "0 10px",
+              padding: '0 10px',
               fontSize: 10,
               letterSpacing: 1,
-              textTransform: "uppercase",
+              textTransform: 'uppercase',
               color: t.fgFaint,
               fontWeight: 600,
               fontFamily: t.fontMono,
@@ -749,11 +705,11 @@ export function Library({
           </div>
           {(
             [
-              ["all", "Any time"],
-              ["today", "Today"],
-              ["yesterday", "Yesterday"],
-              ["week", "Last 7 days"],
-              ["month", "Last 30 days"],
+              ['all', 'Any time'],
+              ['today', 'Today'],
+              ['yesterday', 'Yesterday'],
+              ['week', 'Last 7 days'],
+              ['month', 'Last 30 days'],
             ] as [TimeFilter, string][]
           ).map(([value, label]) => (
             <SidebarRow
@@ -767,7 +723,7 @@ export function Library({
                   width: 16,
                   color: t.fgFaint,
                   fontSize: 11,
-                  textAlign: "center",
+                  textAlign: 'center',
                 }}
               >
                 ⌚
@@ -780,10 +736,10 @@ export function Library({
             style={{
               marginTop: 14,
               marginBottom: 4,
-              padding: "0 10px",
+              padding: '0 10px',
               fontSize: 10,
               letterSpacing: 1,
-              textTransform: "uppercase",
+              textTransform: 'uppercase',
               color: t.fgFaint,
               fontWeight: 600,
               fontFamily: t.fontMono,
@@ -794,12 +750,7 @@ export function Library({
           {CATEGORIES.map((cat: Category) => {
             const meta = CATEGORY_META[cat];
             return (
-              <SidebarRow
-                key={cat}
-                t={t}
-                active={filter === cat}
-                onClick={() => setFilter(cat)}
-              >
+              <SidebarRow key={cat} t={t} active={filter === cat} onClick={() => setFilter(cat)}>
                 <CategoryChip t={t} cat={cat} mode="dot" />
                 <span style={{ flex: 1 }}>{meta.label}</span>
                 <span
@@ -817,8 +768,8 @@ export function Library({
 
           <div
             style={{
-              marginTop: "auto",
-              padding: "12px 10px 4px",
+              marginTop: 'auto',
+              padding: '12px 10px 4px',
               fontSize: 10,
               color: t.fgFaint,
               lineHeight: 1.5,
@@ -838,15 +789,12 @@ export function Library({
         {/* List column */}
         <div
           style={{
-            width: localPreview === "split" ? 340 : "auto",
-            flex: localPreview === "split" ? "none" : 1,
+            width: localPreview === 'split' ? 340 : 'auto',
+            flex: localPreview === 'split' ? 'none' : 1,
             flexShrink: 0,
-            borderRight:
-              localPreview === "split"
-                ? `1px solid ${t.borderSoft}`
-                : "none",
-            display: "flex",
-            flexDirection: "column",
+            borderRight: localPreview === 'split' ? `1px solid ${t.borderSoft}` : 'none',
+            display: 'flex',
+            flexDirection: 'column',
             minHeight: 0,
             minWidth: 320,
           }}
@@ -854,19 +802,19 @@ export function Library({
           {/* Search row */}
           <div
             style={{
-              padding: "10px 12px",
+              padding: '10px 12px',
               borderBottom: `1px solid ${t.borderSoft}`,
-              display: "flex",
-              alignItems: "center",
+              display: 'flex',
+              alignItems: 'center',
               gap: 8,
             }}
           >
             <span
               style={{
-                color: mode === "semantic" ? t.accent : t.fgFaint,
+                color: mode === 'semantic' ? t.accent : t.fgFaint,
                 fontSize: 13,
                 fontFamily: t.fontMono,
-                transition: "color 150ms",
+                transition: 'color 150ms',
               }}
             >
               ⌕
@@ -875,59 +823,38 @@ export function Library({
               ref={searchRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={
-                mode === "semantic"
-                  ? "Describe what you need…"
-                  : "Search history…"
-              }
+              placeholder={mode === 'semantic' ? 'Describe what you need…' : 'Search history…'}
               style={{
                 flex: 1,
                 minWidth: 0,
                 fontSize: 13.5,
                 fontFamily: t.fontUi,
-                background: "transparent",
-                border: "none",
-                outline: "none",
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
                 color: t.fg,
               }}
             />
-            <button
-              onClick={() =>
-                setMode((m) => (m === "fuzzy" ? "semantic" : "fuzzy"))
+            <Button
+              size="sm"
+              variant={mode === 'semantic' ? 'primary' : 'secondary'}
+              onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
+              leadingIcon={
+                <span
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 999,
+                    background: mode === 'semantic' ? t.accentTextOn : t.fgFaint,
+                  }}
+                />
               }
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "3px 7px",
-                fontFamily: t.fontMono,
-                fontSize: 10,
-                fontWeight: 500,
-                background:
-                  mode === "semantic" ? t.accentSoft : "transparent",
-                color: mode === "semantic" ? t.accentInk : t.fgMuted,
-                border: `1px solid ${mode === "semantic" ? t.accentSoft : t.borderSoft}`,
-                borderRadius: 4,
-                cursor: "pointer",
-                letterSpacing: 0.5,
-                textTransform: "uppercase",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-              }}
             >
-              <span
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: 999,
-                  background: mode === "semantic" ? t.accent : t.fgFaint,
-                }}
-              />
               {mode}
-            </button>
+            </Button>
           </div>
 
-          {query && mode === "semantic" && (
+          {query && mode === 'semantic' && (
             <SemanticBanner
               t={t}
               count={searched.length}
@@ -937,15 +864,12 @@ export function Library({
             />
           )}
 
-          <div
-            ref={listRef}
-            style={{ flex: 1, overflow: "auto", padding: 4 }}
-          >
+          <div ref={listRef} style={{ flex: 1, overflow: 'auto', padding: 4 }}>
             {searched.length === 0 && (
               <div
                 style={{
-                  padding: "48px 20px",
-                  textAlign: "center",
+                  padding: '48px 20px',
+                  textAlign: 'center',
                   color: t.fgFaint,
                   fontSize: 12.5,
                   lineHeight: 1.6,
@@ -958,7 +882,7 @@ export function Library({
                     Copy anything and it lands here automatically.
                   </>
                 ) : query ? (
-                  mode === "semantic" && !semanticAvailable ? (
+                  mode === 'semantic' && !semanticAvailable ? (
                     <>
                       Semantic search is off.
                       <br />
@@ -966,7 +890,7 @@ export function Library({
                       <br />
                       or press <Kbd t={t}>Tab</Kbd> to search fuzzy.
                     </>
-                  ) : mode === "semantic" && semanticError ? (
+                  ) : mode === 'semantic' && semanticError ? (
                     <>
                       Semantic search failed.
                       <br />
@@ -978,15 +902,12 @@ export function Library({
                     <>
                       Nothing matches.
                       <br />
-                      Press <Kbd t={t}>Enter</Kbd> to{" "}
-                      {mode === "fuzzy"
-                        ? "search semantically"
-                        : "search again"}
-                      .
+                      Press <Kbd t={t}>Enter</Kbd> to{' '}
+                      {mode === 'fuzzy' ? 'search semantically' : 'search again'}.
                     </>
                   )
                 ) : (
-                  "No items in this filter."
+                  'No items in this filter.'
                 )}
               </div>
             )}
@@ -1001,8 +922,8 @@ export function Library({
                           fontWeight: 600,
                           color: t.fgFaint,
                           letterSpacing: 1.5,
-                          textTransform: "uppercase",
-                          padding: "8px 10px 4px",
+                          textTransform: 'uppercase',
+                          padding: '8px 10px 4px',
                         }}
                       >
                         {g} · {items.length}
@@ -1022,7 +943,7 @@ export function Library({
                         />
                       ))}
                     </div>
-                  ),
+                  )
                 )
               : searched.map((item) => (
                   <ListRow
@@ -1042,13 +963,13 @@ export function Library({
 
           <div
             style={{
-              padding: "8px 12px",
+              padding: '8px 12px',
               borderTop: `1px solid ${t.borderSoft}`,
               fontSize: 10.5,
               color: t.fgFaint,
               fontFamily: t.fontMono,
-              display: "flex",
-              justifyContent: "space-between",
+              display: 'flex',
+              justifyContent: 'space-between',
             }}
           >
             <span>
@@ -1058,7 +979,7 @@ export function Library({
           </div>
         </div>
 
-        {localPreview === "split" && current && (
+        {localPreview === 'split' && current && (
           <PreviewPane
             t={t}
             item={current}

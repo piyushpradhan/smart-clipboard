@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
+import { useTheme } from "ember-design-system";
 import { Palette } from "./Palette";
 import { useAppState } from "../hooks/useAppState";
 import { isSemanticAvailable, useSettings } from "../hooks/useSettings";
@@ -9,11 +10,9 @@ import type { Tweaks } from "../lib/types";
 
 const DEFAULT_TWEAKS: Tweaks = {
   theme: "dark",
-  accentHue: 265,
   density: "comfy",
   categoryDisplay: "chip",
   showLabels: true,
-  fontPair: "geist",
   previewMode: "split",
 };
 
@@ -21,19 +20,18 @@ export function PaletteWindow() {
   const [tweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
   const app = useAppState();
   const { settings } = useSettings();
+  const { setTheme } = useTheme();
 
   const semanticAvailable = isSemanticAvailable(settings);
 
   const t = useMemo(
-    () =>
-      buildTheme(
-        tweaks.theme,
-        tweaks.accentHue,
-        tweaks.density,
-        tweaks.fontPair,
-      ),
-    [tweaks.theme, tweaks.accentHue, tweaks.density, tweaks.fontPair],
+    () => buildTheme(tweaks.theme, tweaks.density),
+    [tweaks.theme, tweaks.density],
   );
+
+  useEffect(() => {
+    setTheme(tweaks.theme);
+  }, [tweaks.theme, setTheme]);
 
   useEffect(() => {
     const unlisten = listen("palette-shown", () => {

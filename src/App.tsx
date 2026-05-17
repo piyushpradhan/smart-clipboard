@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { Button, useTheme } from "ember-design-system";
 import { AIPanel } from "./components/AIPanel";
 import { KeyboardMap } from "./components/KeyboardMap";
 import { ShortcutHint } from "./components/ShortcutHint";
@@ -13,11 +14,9 @@ import { Library } from "./windows/Library";
 
 const DEFAULT_TWEAKS: Tweaks = {
   theme: "dark",
-  accentHue: 265,
   density: "comfy",
   categoryDisplay: "chip",
   showLabels: true,
-  fontPair: "geist",
   previewMode: "split",
 };
 
@@ -68,16 +67,16 @@ function App() {
   const [hintDismissed, setHintDismissedState] = useState(false);
   const app = useAppState();
   const { settings, save: saveSettings } = useSettings();
+  const { setTheme } = useTheme();
+
+  // Mirror Tweaks → ember CSS-var theme. data-theme drives all token colors.
+  useEffect(() => {
+    setTheme(tweaks.theme);
+  }, [tweaks.theme, setTheme]);
 
   const t = useMemo(
-    () =>
-      buildTheme(
-        tweaks.theme,
-        tweaks.accentHue,
-        tweaks.density,
-        tweaks.fontPair,
-      ),
-    [tweaks.theme, tweaks.accentHue, tweaks.density, tweaks.fontPair],
+    () => buildTheme(tweaks.theme, tweaks.density),
+    [tweaks.theme, tweaks.density],
   );
 
   const semanticAvailable = isSemanticAvailable(settings);
@@ -153,7 +152,8 @@ function App() {
             zIndex: 300,
           }}
         >
-          Embedding {app.backfill.remaining} item{app.backfill.remaining === 1 ? "" : "s"}…
+          Embedding {app.backfill.remaining} item
+          {app.backfill.remaining === 1 ? "" : "s"}…
         </div>
       )}
 
@@ -167,47 +167,33 @@ function App() {
         />
       )}
 
-      <button
-        onClick={() => setAiOpen(true)}
-        title="Semantic search"
-        style={{
-          position: "fixed",
-          top: 8,
-          right: 212,
-          padding: "4px 10px",
-          fontFamily: t.fontMono,
-          fontSize: 10.5,
-          color: settings.provider !== "disabled" ? t.accent : t.fgMuted,
-          background: "transparent",
-          border: `1px solid ${settings.provider !== "disabled" ? t.accent : t.borderSoft}`,
-          borderRadius: 4,
-          cursor: "pointer",
-          zIndex: 200,
-        }}
-      >
-        AI
-      </button>
-
-      <button
-        onClick={() => setTweaksOpen((v) => !v)}
-        title="Tweaks"
+      <div
         style={{
           position: "fixed",
           top: 8,
           right: 150,
-          padding: "4px 10px",
-          fontFamily: t.fontMono,
-          fontSize: 10.5,
-          color: t.fgMuted,
-          background: "transparent",
-          border: `1px solid ${t.borderSoft}`,
-          borderRadius: 4,
-          cursor: "pointer",
+          display: "flex",
+          gap: 6,
           zIndex: 200,
         }}
       >
-        Tweaks
-      </button>
+        <Button
+          size="sm"
+          variant={settings.provider !== "disabled" ? "primary" : "ghost"}
+          onClick={() => setAiOpen(true)}
+          title="Semantic search"
+        >
+          AI
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setTweaksOpen((v) => !v)}
+          title="Tweaks"
+        >
+          Tweaks
+        </Button>
+      </div>
 
       {aiOpen && (
         <AIPanel
@@ -251,7 +237,7 @@ function App() {
               borderRadius: 12,
               overflow: "hidden",
               border: `1px solid ${t.border}`,
-              boxShadow: "0 40px 100px rgba(0,0,0,0.5)",
+              boxShadow: "var(--shadow-md)",
             }}
           >
             <KeyboardMap t={t} />
