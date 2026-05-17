@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { Button } from "ember-design-system";
+import { Button, IconButton } from "ember-design-system";
+import { X } from "lucide-react";
 import type {
   CategoryDisplay,
   Density,
@@ -23,6 +24,40 @@ const DENSITIES: Density[] = ["comfy", "compact"];
 const DISPLAYS: CategoryDisplay[] = ["chip", "icon", "dot"];
 const PREVIEWS: PreviewMode[] = ["split", "inline"];
 
+function Section({
+  t,
+  title,
+  children,
+}: {
+  t: Theme;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      style={{
+        padding: "10px 16px",
+        borderBottom: `1px solid ${t.borderSoft}`,
+      }}
+    >
+      <div
+        style={{
+          fontSize: 9.5,
+          fontFamily: t.fontMono,
+          color: t.fgFaint,
+          textTransform: "uppercase",
+          letterSpacing: 1.4,
+          fontWeight: 600,
+          marginBottom: 8,
+        }}
+      >
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function Row({
   t,
   label,
@@ -38,22 +73,30 @@ function Row({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 12,
-        padding: "8px 0",
+        gap: 10,
+        padding: "4px 0",
+        minHeight: 28,
       }}
     >
       <span
         style={{
-          fontSize: 11,
+          fontSize: 12,
           color: t.fgMuted,
-          fontFamily: t.fontMono,
-          letterSpacing: 0.3,
-          textTransform: "uppercase",
+          fontFamily: t.fontUi,
         }}
       >
         {label}
       </span>
-      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{children}</div>
+      <div
+        style={{
+          display: "flex",
+          gap: 4,
+          flexWrap: "wrap",
+          justifyContent: "flex-end",
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -70,7 +113,7 @@ function Chip({
   return (
     <Button
       size="sm"
-      variant={active ? "primary" : "secondary"}
+      variant={active ? "primary" : "ghost"}
       onClick={onClick}
     >
       {children}
@@ -118,158 +161,220 @@ export function TweaksPanel({
         position: "fixed",
         top: 52,
         right: 16,
-        width: 300,
-        padding: 16,
+        width: 320,
         background: t.bgSurface,
         color: t.fg,
         border: `1px solid ${t.border}`,
-        borderRadius: 10,
+        borderRadius: 12,
         fontFamily: t.fontUi,
         fontSize: 13,
         boxShadow: "var(--shadow-md)",
         zIndex: 600,
+        overflow: "hidden",
+        animation: "tweaksIn 180ms var(--easing-standard)",
       }}
     >
+      <style>{`
+        @keyframes tweaksIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to { opacity: 1; transform: none; }
+        }
+      `}</style>
+
+      {/* Header — accent stripe + mono kicker */}
       <div
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 8,
-        }}
-      >
-        <span style={{ fontWeight: 600 }}>Tweaks</span>
-        <Button size="sm" variant="ghost" onClick={onClose} aria-label="Close">
-          ✕
-        </Button>
-      </div>
-
-      <Row t={t} label="Theme">
-        {THEME_MODES.map((m) => (
-          <Chip
-            key={m}
-            active={tweaks.theme === m}
-            onClick={() => set("theme", m)}
-          >
-            {m}
-          </Chip>
-        ))}
-      </Row>
-      <Row t={t} label="Density">
-        {DENSITIES.map((d) => (
-          <Chip
-            key={d}
-            active={tweaks.density === d}
-            onClick={() => set("density", d)}
-          >
-            {d}
-          </Chip>
-        ))}
-      </Row>
-      <Row t={t} label="Category">
-        {DISPLAYS.map((d) => (
-          <Chip
-            key={d}
-            active={tweaks.categoryDisplay === d}
-            onClick={() => set("categoryDisplay", d)}
-          >
-            {d}
-          </Chip>
-        ))}
-      </Row>
-      <Row t={t} label="Labels">
-        <Chip
-          active={tweaks.showLabels}
-          onClick={() => set("showLabels", true)}
-        >
-          on
-        </Chip>
-        <Chip
-          active={!tweaks.showLabels}
-          onClick={() => set("showLabels", false)}
-        >
-          off
-        </Chip>
-      </Row>
-      <Row t={t} label="Preview">
-        {PREVIEWS.map((p) => (
-          <Chip
-            key={p}
-            active={tweaks.previewMode === p}
-            onClick={() => set("previewMode", p)}
-          >
-            {p}
-          </Chip>
-        ))}
-      </Row>
-      <Row t={t} label="Plain text">
-        <Chip
-          active={tweaks.plainTextOnly ?? false}
-          onClick={() => set("plainTextOnly", !(tweaks.plainTextOnly ?? false))}
-        >
-          {(tweaks.plainTextOnly ?? false) ? "always" : "auto"}
-        </Chip>
-      </Row>
-
-      <Row t={t} label="Shortcut">
-        <span style={{ fontSize: 10.5, color: t.fgMuted }}>
-          {tweaks.paletteShortcut ?? "Ctrl+Shift+Space"}
-        </span>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            const CTRL = 0x08;
-            const SHIFT = 0x200;
-            const switchingToCtrlSpace =
-              tweaks.paletteShortcut === "Ctrl+Shift+Space";
-            const next: Tweaks = {
-              ...tweaks,
-              paletteShortcut: switchingToCtrlSpace
-                ? "Ctrl+Space"
-                : "Ctrl+Shift+Space",
-            };
-            onChange(next);
-            void invoke("set_shortcut", {
-              sc: {
-                modifiers: switchingToCtrlSpace ? CTRL : CTRL | SHIFT,
-                key: "Space",
-              },
-            });
-          }}
-        >
-          Rebind
-        </Button>
-      </Row>
-
-      <Row t={t} label="Launch">
-        <Chip
-          active={!!tweaks.autostart}
-          onClick={() => {
-            const next = !tweaks.autostart;
-            onChange({ ...tweaks, autostart: next });
-            void invoke("set_autostart", { enabled: next });
-          }}
-        >
-          {tweaks.autostart ? "on" : "off"}
-        </Chip>
-      </Row>
-
-      <div
-        style={{
-          marginTop: 8,
-          paddingTop: 10,
-          borderTop: `1px solid ${t.borderSoft}`,
+          position: "relative",
+          padding: "14px 16px 12px",
+          borderBottom: `1px solid ${t.borderSoft}`,
+          background:
+            "linear-gradient(180deg, var(--accent-ember-50) 0%, transparent 100%)",
         }}
       >
         <div
           style={{
-            fontSize: 10.5,
-            color: t.fgMuted,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            bottom: 0,
+            width: 3,
+            background: t.accent,
+          }}
+        />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: 9.5,
+                fontFamily: t.fontMono,
+                color: t.accentInk,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                fontWeight: 600,
+              }}
+            >
+              Tweaks
+            </div>
+            <div
+              style={{
+                fontSize: 13.5,
+                fontWeight: 600,
+                color: t.fg,
+                letterSpacing: -0.2,
+                marginTop: 2,
+              }}
+            >
+              Make it yours
+            </div>
+          </div>
+          <IconButton
+            aria-label="Close"
+            icon={<X size={14} />}
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+          />
+        </div>
+      </div>
+
+      <Section t={t} title="Appearance">
+        <Row t={t} label="Theme">
+          {THEME_MODES.map((m) => (
+            <Chip key={m} active={tweaks.theme === m} onClick={() => set("theme", m)}>
+              {m}
+            </Chip>
+          ))}
+        </Row>
+        <Row t={t} label="Density">
+          {DENSITIES.map((d) => (
+            <Chip
+              key={d}
+              active={tweaks.density === d}
+              onClick={() => set("density", d)}
+            >
+              {d}
+            </Chip>
+          ))}
+        </Row>
+        <Row t={t} label="Preview">
+          {PREVIEWS.map((p) => (
+            <Chip
+              key={p}
+              active={tweaks.previewMode === p}
+              onClick={() => set("previewMode", p)}
+            >
+              {p}
+            </Chip>
+          ))}
+        </Row>
+      </Section>
+
+      <Section t={t} title="Library">
+        <Row t={t} label="Category badge">
+          {DISPLAYS.map((d) => (
+            <Chip
+              key={d}
+              active={tweaks.categoryDisplay === d}
+              onClick={() => set("categoryDisplay", d)}
+            >
+              {d}
+            </Chip>
+          ))}
+        </Row>
+        <Row t={t} label="Show labels">
+          <Chip active={tweaks.showLabels} onClick={() => set("showLabels", true)}>
+            on
+          </Chip>
+          <Chip active={!tweaks.showLabels} onClick={() => set("showLabels", false)}>
+            off
+          </Chip>
+        </Row>
+        <Row t={t} label="Plain text only">
+          <Chip
+            active={tweaks.plainTextOnly ?? false}
+            onClick={() =>
+              set("plainTextOnly", !(tweaks.plainTextOnly ?? false))
+            }
+          >
+            {(tweaks.plainTextOnly ?? false) ? "always" : "auto"}
+          </Chip>
+        </Row>
+      </Section>
+
+      <Section t={t} title="System">
+        <Row t={t} label="Palette shortcut">
+          <span
+            style={{
+              fontSize: 11,
+              color: t.fgMuted,
+              fontFamily: t.fontMono,
+              padding: "0 6px",
+            }}
+          >
+            {tweaks.paletteShortcut ?? "Ctrl+Shift+Space"}
+          </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const CTRL = 0x08;
+              const SHIFT = 0x200;
+              const switchingToCtrlSpace =
+                tweaks.paletteShortcut === "Ctrl+Shift+Space";
+              const next: Tweaks = {
+                ...tweaks,
+                paletteShortcut: switchingToCtrlSpace
+                  ? "Ctrl+Space"
+                  : "Ctrl+Shift+Space",
+              };
+              onChange(next);
+              void invoke("set_shortcut", {
+                sc: {
+                  modifiers: switchingToCtrlSpace ? CTRL : CTRL | SHIFT,
+                  key: "Space",
+                },
+              });
+            }}
+          >
+            Rebind
+          </Button>
+        </Row>
+        <Row t={t} label="Launch at login">
+          <Chip
+            active={!!tweaks.autostart}
+            onClick={() => {
+              const next = !tweaks.autostart;
+              onChange({ ...tweaks, autostart: next });
+              void invoke("set_autostart", { enabled: next });
+            }}
+          >
+            {tweaks.autostart ? "on" : "off"}
+          </Chip>
+        </Row>
+      </Section>
+
+      <div
+        style={{
+          padding: "12px 16px",
+          background:
+            "color-mix(in oklab, var(--status-danger) 5%, transparent)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 9.5,
+            color: "var(--status-danger)",
             fontFamily: t.fontMono,
-            letterSpacing: 0.3,
+            letterSpacing: 1.4,
             textTransform: "uppercase",
-            marginBottom: 6,
+            fontWeight: 600,
+            marginBottom: 8,
           }}
         >
           Danger zone
@@ -286,6 +391,7 @@ export function TweaksPanel({
         ) : (
           <div style={{ display: "flex", gap: 6 }}>
             <Button
+              fullWidth
               size="sm"
               variant="ghost"
               disabled={clearing}
@@ -294,6 +400,7 @@ export function TweaksPanel({
               Cancel
             </Button>
             <Button
+              fullWidth
               size="sm"
               variant="danger"
               loading={clearing}

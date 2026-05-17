@@ -696,7 +696,7 @@ export function Palette({
                     onClose();
                   }}
                   trailingIcon={
-                    <Kbd t={t} accent>
+                    <Kbd t={t} onAccent>
                       ↵
                     </Kbd>
                   }

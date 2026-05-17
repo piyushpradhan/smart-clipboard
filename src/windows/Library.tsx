@@ -545,23 +545,49 @@ export function Library({
           <div
             data-tauri-drag-region
             style={{
-              width: 14,
-              height: 14,
-              borderRadius: 3,
-              background: t.accent,
+              width: 18,
+              height: 18,
+              borderRadius: 4,
+              background:
+                'linear-gradient(135deg, var(--accent-ember-500) 0%, var(--accent-ember-700) 100%)',
               display: 'grid',
               placeItems: 'center',
-              color: '#fff',
-              fontSize: 9,
+              color: 'var(--text-inverse)',
+              fontSize: 11,
               fontWeight: 700,
-              fontFamily: t.fontMono,
+              fontFamily: t.fontUi,
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18), 0 1px 2px rgba(0,0,0,0.15)',
             }}
           >
             ✦
           </div>
-          <div data-tauri-drag-region style={{ fontSize: 12.5, color: t.fgMuted, fontWeight: 500 }}>
+          <div
+            data-tauri-drag-region
+            style={{
+              fontSize: 13,
+              color: t.fg,
+              fontWeight: 600,
+              letterSpacing: -0.2,
+              fontFamily: t.fontUi,
+            }}
+          >
             Recall
           </div>
+          <span
+            data-tauri-drag-region
+            style={{
+              fontSize: 9.5,
+              fontFamily: t.fontMono,
+              color: t.fgFaint,
+              letterSpacing: 1.4,
+              textTransform: 'uppercase',
+              padding: '2px 6px',
+              border: `1px solid ${t.borderSoft}`,
+              borderRadius: 3,
+            }}
+          >
+            v0.6.1
+          </span>
         </div>
         <div style={{ display: 'flex', height: '100%' }}>
           {(
@@ -804,54 +830,68 @@ export function Library({
             style={{
               padding: '10px 12px',
               borderBottom: `1px solid ${t.borderSoft}`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
             }}
           >
-            <span
+            <div
               style={{
-                color: mode === 'semantic' ? t.accent : t.fgFaint,
-                fontSize: 13,
-                fontFamily: t.fontMono,
-                transition: 'color 150ms',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                height: 32,
+                padding: '0 6px 0 10px',
+                background: 'var(--bg-subtle)',
+                border: `1px solid ${t.borderSoft}`,
+                borderRadius: 8,
+                transition:
+                  'border-color var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard)',
               }}
             >
-              ⌕
-            </span>
-            <input
-              ref={searchRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={mode === 'semantic' ? 'Describe what you need…' : 'Search history…'}
-              style={{
-                flex: 1,
-                minWidth: 0,
-                fontSize: 13.5,
-                fontFamily: t.fontUi,
-                background: 'transparent',
-                border: 'none',
-                outline: 'none',
-                color: t.fg,
-              }}
-            />
-            <Button
-              size="sm"
-              variant={mode === 'semantic' ? 'primary' : 'secondary'}
-              onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
-              leadingIcon={
-                <span
-                  style={{
-                    width: 4,
-                    height: 4,
-                    borderRadius: 999,
-                    background: mode === 'semantic' ? t.accentTextOn : t.fgFaint,
-                  }}
-                />
-              }
-            >
-              {mode}
-            </Button>
+              <span
+                style={{
+                  color: mode === 'semantic' ? t.accent : t.fgFaint,
+                  fontSize: 13,
+                  fontFamily: t.fontMono,
+                  transition: 'color 150ms',
+                  display: 'inline-flex',
+                }}
+              >
+                ⌕
+              </span>
+              <input
+                ref={searchRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={mode === 'semantic' ? 'Describe what you need…' : 'Search history…'}
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  fontSize: 13.5,
+                  fontFamily: t.fontUi,
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: t.fg,
+                  letterSpacing: -0.1,
+                }}
+              />
+              <Button
+                size="sm"
+                variant={mode === 'semantic' ? 'primary' : 'ghost'}
+                onClick={() => setMode((m) => (m === 'fuzzy' ? 'semantic' : 'fuzzy'))}
+                leadingIcon={
+                  <span
+                    style={{
+                      width: 5,
+                      height: 5,
+                      borderRadius: 999,
+                      background: mode === 'semantic' ? t.accentTextOn : t.fgFaint,
+                    }}
+                  />
+                }
+              >
+                {mode}
+              </Button>
+            </div>
           </div>
 
           {query && mode === 'semantic' && (
@@ -965,17 +1005,41 @@ export function Library({
             style={{
               padding: '8px 12px',
               borderTop: `1px solid ${t.borderSoft}`,
+              background: 'var(--bg-subtle)',
               fontSize: 10.5,
               color: t.fgFaint,
               fontFamily: t.fontMono,
+              fontVariantNumeric: 'tabular-nums',
               display: 'flex',
+              alignItems: 'center',
               justifyContent: 'space-between',
+              letterSpacing: 0.2,
             }}
           >
             <span>
-              {searched.length} / {app.items.length}
+              <span style={{ color: t.fgMuted }}>{searched.length}</span>
+              <span style={{ opacity: 0.6 }}> / {app.items.length}</span>
             </span>
-            <span>local · {(app.items.length * 0.4).toFixed(1)} KB</span>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: 999,
+                  background: 'var(--status-success)',
+                }}
+                aria-hidden
+              />
+              <span style={{ textTransform: 'uppercase', letterSpacing: 1 }}>local</span>
+              <span style={{ opacity: 0.5 }}>·</span>
+              <span>{(app.items.length * 0.4).toFixed(1)} KB</span>
+            </span>
           </div>
         </div>
 
