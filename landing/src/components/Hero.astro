@@ -4,7 +4,7 @@
 <section class="hero">
   <div class="container hero__inner">
     <div class="hero__copy">
-      <span class="eyebrow">v0.5 — local first</span>
+      <span class="eyebrow">v0.6 — local first</span>
       <h1 class="hero__title">
         A clipboard that<br />
         <span class="hero__title-accent">remembers everything.</span>
@@ -90,8 +90,8 @@
   .hero__title-accent {
     background: linear-gradient(
       135deg,
-      var(--accent) 0%,
-      oklch(72% 0.18 calc(var(--accent-hue) + 30)) 100%
+      var(--accent-ember-500) 0%,
+      var(--accent-ember-700) 100%
     );
     -webkit-background-clip: text;
     background-clip: text;
@@ -142,8 +142,8 @@
     align-items: center;
     gap: 8px;
     padding: 10px 14px;
-    border-bottom: 1px solid var(--border-soft);
-    background: oklch(15% 0.006 250);
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-subtle);
     position: relative;
   }
 
@@ -154,15 +154,15 @@
   }
 
   .hero__dot[data-color="red"] {
-    background: oklch(64% 0.18 25);
+    background: var(--status-danger);
   }
 
   .hero__dot[data-color="yellow"] {
-    background: oklch(80% 0.13 85);
+    background: var(--status-warning);
   }
 
   .hero__dot[data-color="green"] {
-    background: oklch(70% 0.16 145);
+    background: var(--status-success);
   }
 
   .hero__chrome-title {
@@ -186,7 +186,7 @@
     inset: -40px;
     background: radial-gradient(
       400px 280px at 50% 50%,
-      oklch(60% 0.2 var(--accent-hue) / 0.45),
+      color-mix(in oklab, var(--accent-ember-500) 38%, transparent),
       transparent 70%
     );
     z-index: 1;
