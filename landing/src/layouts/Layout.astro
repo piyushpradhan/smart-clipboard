@@ -1,4 +1,6 @@
 ---
+import "ember-design-system/tokens.css";
+
 interface Props {
   title?: string;
   description?: string;
@@ -13,7 +15,7 @@ const ogImage = "/media/library-image-filter.png";
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -38,40 +40,42 @@ const ogImage = "/media/library-image-filter.png";
   <body>
     <slot />
     <style is:global>
+      /* Bridge the legacy landing var names onto ember tokens so component
+       * styles keep reading them without a full sweep. Ember owns the actual
+       * palette via tokens.css imported above; data-theme=dark on <html>
+       * selects the dark variant. */
       :root {
-        --accent-hue: 265;
-        --accent: oklch(62% 0.19 var(--accent-hue));
-        --accent-soft: oklch(38% 0.14 var(--accent-hue) / 0.35);
-        --accent-ink: oklch(78% 0.12 var(--accent-hue));
+        --accent: var(--accent-ember-500);
+        --accent-strong: var(--accent-ember-600);
+        --accent-soft: color-mix(in oklab, var(--accent-ember-500) 22%, transparent);
+        --accent-ink: var(--accent-ember-600);
 
-        --bg-root: oklch(13% 0.006 250);
-        --bg-window: oklch(18% 0.006 250);
-        --bg-surface: oklch(20% 0.006 250 / 0.5);
-        --bg-surface-alt: oklch(22% 0.006 250 / 0.7);
+        --bg-root: var(--bg-canvas);
+        --bg-window: var(--bg-surface);
+        --bg-surface: var(--bg-subtle);
+        --bg-surface-alt: var(--bg-muted);
 
-        --fg: oklch(96% 0.005 250);
-        --fg-muted: oklch(75% 0.008 250);
-        --fg-faint: oklch(58% 0.008 250);
+        --fg: var(--text-primary);
+        --fg-muted: var(--text-secondary);
+        --fg-faint: var(--text-tertiary);
 
-        --border: oklch(34% 0.006 250);
-        --border-soft: oklch(28% 0.006 250);
+        --border: var(--border-default);
+        --border-soft: var(--border-subtle);
 
-        --aurora: radial-gradient(
+        --aurora:
+          radial-gradient(
             1200px 600px at 15% -10%,
-            oklch(28% 0.06 var(--accent-hue) / 0.55),
+            color-mix(in oklab, var(--accent-ember-500) 32%, transparent),
             transparent 60%
           ),
           radial-gradient(
             900px 500px at 110% 30%,
-            oklch(26% 0.05 calc(var(--accent-hue) + 80) / 0.4),
+            color-mix(in oklab, var(--accent-ember-700) 24%, transparent),
             transparent 55%
           ),
-          var(--bg-root);
+          var(--bg-canvas);
 
-        --font-ui: "Geist", -apple-system, BlinkMacSystemFont, "Inter", system-ui,
-          sans-serif;
-        --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular,
-          Menlo, monospace;
+        --font-ui: var(--font-sans);
       }
 
       *,
@@ -110,7 +114,8 @@ const ogImage = "/media/library-image-filter.png";
       }
 
       ::selection {
-        background: oklch(62% 0.19 var(--accent-hue) / 0.4);
+        background: var(--accent-ember-100);
+        color: var(--text-primary);
       }
 
       .container {
@@ -126,28 +131,32 @@ const ogImage = "/media/library-image-filter.png";
       .eyebrow {
         font-family: var(--font-mono);
         font-size: 11px;
-        font-weight: 500;
-        letter-spacing: 0.18em;
+        font-weight: 600;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
-        color: var(--accent-ink);
+        color: var(--accent-ember-600);
       }
 
+      /* Match the in-app ember Button so the marketing CTAs read as the same
+       * family of object — same radius, same height, same lift. */
       .button {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 12px 18px;
+        padding: 0 16px;
+        height: 40px;
         font-family: var(--font-ui);
         font-size: 14px;
         font-weight: 500;
         letter-spacing: -0.01em;
-        border-radius: 8px;
+        border-radius: var(--radius-md);
         border: 1px solid transparent;
         cursor: pointer;
         transition:
-          background 150ms ease,
-          border-color 150ms ease,
-          transform 150ms ease;
+          background var(--duration-fast) var(--easing-standard),
+          border-color var(--duration-fast) var(--easing-standard),
+          box-shadow var(--duration-fast) var(--easing-standard),
+          transform var(--duration-fast) var(--easing-standard);
       }
 
       .button:hover {
@@ -155,23 +164,25 @@ const ogImage = "/media/library-image-filter.png";
       }
 
       .button--primary {
-        background: var(--accent);
-        color: #fff;
+        background: var(--accent-ember-500);
+        color: var(--text-inverse);
+        box-shadow: var(--shadow-sm);
       }
 
       .button--primary:hover {
-        background: oklch(67% 0.21 var(--accent-hue));
+        background: var(--accent-ember-600);
+        box-shadow: var(--shadow-md);
       }
 
       .button--ghost {
         background: transparent;
-        border-color: var(--border);
-        color: var(--fg);
+        border-color: var(--border-default);
+        color: var(--text-primary);
       }
 
       .button--ghost:hover {
-        border-color: var(--accent);
-        color: var(--accent-ink);
+        border-color: var(--accent-ember-500);
+        color: var(--accent-ember-600);
       }
 
       .kbd {
@@ -181,10 +192,13 @@ const ogImage = "/media/library-image-filter.png";
         font-family: var(--font-mono);
         font-size: 11px;
         font-weight: 500;
-        color: var(--fg-muted);
-        background: var(--bg-surface-alt);
-        border: 1px solid var(--border);
-        border-radius: 4px;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-secondary);
+        background: color-mix(in oklab, var(--text-primary) 6%, transparent);
+        border: 1px solid var(--border-subtle);
+        border-radius: 3px;
+        box-shadow: inset 0 -1px 0
+          color-mix(in oklab, var(--text-primary) 10%, transparent);
         line-height: 1;
       }
 

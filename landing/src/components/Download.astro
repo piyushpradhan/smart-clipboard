@@ -102,7 +102,7 @@ const platforms = [
     background:
       radial-gradient(
         600px 300px at 80% 0%,
-        oklch(40% 0.15 var(--accent-hue) / 0.4),
+        color-mix(in oklab, var(--accent-ember-500) 28%, transparent),
         transparent 60%
       ),
       var(--bg-surface);
@@ -137,7 +137,7 @@ const platforms = [
     align-items: center;
     gap: 14px;
     padding: 18px 20px;
-    background: oklch(15% 0.006 250 / 0.7);
+    background: color-mix(in oklab, var(--bg-subtle) 80%, transparent);
     border: 1px solid var(--border-soft);
     border-radius: 10px;
     color: var(--fg);
@@ -148,9 +148,9 @@ const platforms = [
   }
 
   .platform:hover {
-    border-color: var(--accent);
+    border-color: var(--accent-ember-500);
     transform: translateY(-2px);
-    background: oklch(18% 0.006 250 / 0.85);
+    background: var(--bg-muted);
   }
 
   .platform__icon {
