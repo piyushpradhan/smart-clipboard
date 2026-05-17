@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import { Button, Input } from "ember-design-system";
-import { relTime } from "../lib/time";
-import type { ClipItem, Theme } from "../lib/types";
-import type { AppState } from "../hooks/useAppState";
-import { useImageUrl } from "../hooks/useImageUrl";
-import { CategoryChip, ItemBody, Kbd } from "./Primitives";
+import { useEffect, useState } from 'react';
+import { Button, Input } from 'ember-design-system';
+import { relTime } from '../lib/time';
+import type { ClipItem, Theme } from '../lib/types';
+import type { AppState } from '../hooks/useAppState';
+import { useImageUrl } from '../hooks/useImageUrl';
+import { CategoryChip, ItemBody, Kbd } from './Primitives';
 
 function ImagePreview({
   t,
@@ -26,7 +26,7 @@ function ImagePreview({
       src={url}
       alt={item.preview}
       style={{
-        maxWidth: "100%",
+        maxWidth: '100%',
         maxHeight: 400,
         borderRadius: 8,
         background: t.bgSurfaceAlt,
@@ -65,21 +65,21 @@ export function PreviewPane({
       style={{
         flex: 1,
         minWidth: 0,
-        display: "flex",
-        flexDirection: "column",
+        display: 'flex',
+        flexDirection: 'column',
         background: t.bgSurfaceAlt,
       }}
     >
       <div
         style={{
-          padding: "16px 22px 12px",
+          padding: '16px 22px 12px',
           borderBottom: `1px solid ${t.borderSoft}`,
         }}
       >
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
+            display: 'flex',
+            alignItems: 'center',
             gap: 10,
             marginBottom: 8,
           }}
@@ -91,16 +91,14 @@ export function PreviewPane({
               color: t.fgFaint,
               fontFamily: t.fontMono,
               flex: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
             {item.source} · {relTime(item.minutesAgo)}
           </span>
-          {item.pinned && (
-            <span style={{ color: t.accent, fontSize: 12 }}>★</span>
-          )}
+          {item.pinned && <span style={{ color: t.accent, fontSize: 12 }}>★</span>}
         </div>
         {showLabels &&
           (editing ? (
@@ -113,11 +111,11 @@ export function PreviewPane({
                 setEditing(false);
               }}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
+                if (e.key === 'Enter') {
                   app.updateLabel(item.id, draft);
                   setEditing(false);
                 }
-                if (e.key === "Escape") {
+                if (e.key === 'Escape') {
                   setDraft(item.label);
                   setEditing(false);
                 }
@@ -128,27 +126,27 @@ export function PreviewPane({
               onDoubleClick={() => setEditing(true)}
               title={
                 item.labelGenerated
-                  ? "Double-click to rename"
-                  : "Awaiting AI label — double-click to rename"
+                  ? 'Double-click to rename'
+                  : 'Awaiting AI label — double-click to rename'
               }
               style={{
                 fontSize: 17,
                 fontWeight: item.labelGenerated ? 600 : 500,
-                fontStyle: item.labelGenerated ? "normal" : "italic",
+                fontStyle: item.labelGenerated ? 'normal' : 'italic',
                 color: item.labelGenerated ? t.fg : t.fgMuted,
                 letterSpacing: -0.3,
                 lineHeight: 1.3,
-                cursor: "text",
-                display: "flex",
-                alignItems: "center",
+                cursor: 'text',
+                display: 'flex',
+                alignItems: 'center',
                 gap: 10,
               }}
             >
               <span
                 style={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                   minWidth: 0,
                 }}
               >
@@ -158,14 +156,14 @@ export function PreviewPane({
                 <span
                   style={{
                     fontSize: 10,
-                    fontStyle: "normal",
+                    fontStyle: 'normal',
                     fontWeight: 500,
                     color: t.fgFaint,
                     fontFamily: t.fontMono,
                     letterSpacing: 1,
-                    textTransform: "uppercase",
+                    textTransform: 'uppercase',
                     border: `1px solid ${t.borderSoft}`,
-                    padding: "2px 6px",
+                    padding: '2px 6px',
                     borderRadius: 3,
                     flexShrink: 0,
                   }}
@@ -176,8 +174,8 @@ export function PreviewPane({
             </div>
           ))}
       </div>
-      <div style={{ flex: 1, overflow: "auto", padding: "18px 22px" }}>
-        {item.category === "image" ? (
+      <div style={{ flex: 1, overflow: 'auto', padding: '18px 22px' }}>
+        {item.category === 'image' ? (
           <ImagePreview t={t} item={item} getImage={app.getImage} />
         ) : (
           <ItemBody t={t} item={item} />
@@ -185,12 +183,13 @@ export function PreviewPane({
       </div>
       <div
         style={{
-          display: "flex",
-          gap: 6,
-          padding: "10px 14px",
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '12px 16px',
           borderTop: `1px solid ${t.borderSoft}`,
           background: t.bgSurface,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
         }}
       >
         <Button
@@ -198,7 +197,7 @@ export function PreviewPane({
           variant="primary"
           onClick={() => app.copyItem(item.id)}
           trailingIcon={
-            <Kbd t={t} accent>
+            <Kbd t={t} onAccent>
               ↵
             </Kbd>
           }
@@ -211,7 +210,7 @@ export function PreviewPane({
           onClick={() => app.pinItem(item.id)}
           trailingIcon={<Kbd t={t}>⌘P</Kbd>}
         >
-          {item.pinned ? "Unpin" : "Pin"}
+          {item.pinned ? 'Unpin' : 'Pin'}
         </Button>
         <Button
           size="sm"

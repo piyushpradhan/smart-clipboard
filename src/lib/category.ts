@@ -3,21 +3,20 @@ import type { Category, Theme } from "./types";
 export interface CategoryMeta {
   label: string;
   mono: string;
-  hue: number;
   icon: string;
 }
 
 export const CATEGORY_META: Record<Category, CategoryMeta> = {
-  code: { label: "Code", mono: "CODE", hue: 265, icon: "{ }" },
-  url: { label: "Link", mono: "URL", hue: 210, icon: "↗" },
-  email: { label: "Email", mono: "EMAIL", hue: 155, icon: "@" },
-  phone: { label: "Phone", mono: "PHONE", hue: 30, icon: "☏" },
-  color: { label: "Color", mono: "HEX", hue: 340, icon: "●" },
-  path: { label: "Path", mono: "PATH", hue: 50, icon: "/" },
-  text: { label: "Text", mono: "TEXT", hue: 220, icon: "¶" },
-  address: { label: "Address", mono: "ADDR", hue: 100, icon: "⌂" },
-  number: { label: "Number", mono: "NUM", hue: 190, icon: "#" },
-  image: { label: "Image", mono: "IMG", hue: 280, icon: "🖼" },
+  code: { label: "Code", mono: "CODE", icon: "{ }" },
+  url: { label: "Link", mono: "URL", icon: "↗" },
+  email: { label: "Email", mono: "EMAIL", icon: "@" },
+  phone: { label: "Phone", mono: "PHONE", icon: "☏" },
+  color: { label: "Color", mono: "HEX", icon: "●" },
+  path: { label: "Path", mono: "PATH", icon: "/" },
+  text: { label: "Text", mono: "TEXT", icon: "¶" },
+  address: { label: "Address", mono: "ADDR", icon: "⌂" },
+  number: { label: "Number", mono: "NUM", icon: "#" },
+  image: { label: "Image", mono: "IMG", icon: "🖼" },
 };
 
 export const CATEGORIES: Category[] = [
@@ -43,17 +42,79 @@ export interface CategoryStyle {
   label: string;
 }
 
-export function catStyle(t: Theme, cat: Category): CategoryStyle {
+/**
+ * Five tones aligned with ember's palette. The previous catStyle synthesised
+ * a different hue per category which leaked cool blues into a warm-neutral
+ * design language. Now every category resolves to one of: ember accent, a
+ * semantic status colour (success/warning/danger/info), or a warm neutral —
+ * so chips read as part of the system rather than an arbitrary spectrum.
+ */
+type Tone = "accent" | "success" | "warning" | "danger" | "info" | "neutral";
+
+interface TonePalette {
+  bg: string;
+  bgStrong: string;
+  ink: string;
+  border: string;
+}
+
+const TONE: Record<Tone, TonePalette> = {
+  accent: {
+    bg: "var(--accent-ember-50)",
+    bgStrong: "var(--accent-ember-500)",
+    ink: "var(--accent-ember-700)",
+    border: "var(--accent-ember-100)",
+  },
+  success: {
+    bg: "color-mix(in oklab, var(--status-success) 14%, transparent)",
+    bgStrong: "var(--status-success)",
+    ink: "var(--status-success)",
+    border: "color-mix(in oklab, var(--status-success) 35%, transparent)",
+  },
+  warning: {
+    bg: "color-mix(in oklab, var(--status-warning) 16%, transparent)",
+    bgStrong: "var(--status-warning)",
+    ink: "var(--status-warning)",
+    border: "color-mix(in oklab, var(--status-warning) 38%, transparent)",
+  },
+  danger: {
+    bg: "color-mix(in oklab, var(--status-danger) 14%, transparent)",
+    bgStrong: "var(--status-danger)",
+    ink: "var(--status-danger)",
+    border: "color-mix(in oklab, var(--status-danger) 35%, transparent)",
+  },
+  info: {
+    bg: "color-mix(in oklab, var(--status-info) 14%, transparent)",
+    bgStrong: "var(--status-info)",
+    ink: "var(--status-info)",
+    border: "color-mix(in oklab, var(--status-info) 35%, transparent)",
+  },
+  neutral: {
+    bg: "var(--bg-subtle)",
+    bgStrong: "var(--text-tertiary)",
+    ink: "var(--text-secondary)",
+    border: "var(--border-subtle)",
+  },
+};
+
+const CATEGORY_TONE: Record<Category, Tone> = {
+  code: "accent",
+  url: "info",
+  email: "success",
+  phone: "warning",
+  color: "danger",
+  path: "neutral",
+  text: "neutral",
+  address: "neutral",
+  number: "neutral",
+  image: "accent",
+};
+
+export function catStyle(_t: Theme, cat: Category): CategoryStyle {
   const meta = CATEGORY_META[cat];
-  const hue = meta.hue;
-  const dark = t.dark;
+  const tone = TONE[CATEGORY_TONE[cat]];
   return {
-    bg: dark ? `oklch(28% 0.07 ${hue} / 0.55)` : `oklch(94% 0.04 ${hue})`,
-    bgStrong: dark ? `oklch(35% 0.1 ${hue})` : `oklch(88% 0.07 ${hue})`,
-    ink: dark ? `oklch(82% 0.1 ${hue})` : `oklch(40% 0.14 ${hue})`,
-    border: dark
-      ? `oklch(45% 0.08 ${hue} / 0.6)`
-      : `oklch(82% 0.06 ${hue})`,
+    ...tone,
     mono: meta.mono,
     icon: meta.icon,
     label: meta.label,

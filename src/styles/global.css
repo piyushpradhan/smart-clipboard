@@ -14,12 +14,26 @@ body,
   overflow: hidden;
 }
 
+/* Override ember's default font stack — Geist gives the UI more character
+ * than Inter without losing the geometric crispness ember's tokens assume.
+ * JetBrains Mono stays as the fallback for mono since Geist Mono ships
+ * fewer weights at small sizes. */
+:root {
+  --font-sans: 'Geist', 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui,
+    sans-serif;
+  --font-display: 'Geist', var(--font-sans);
+  --font-mono: 'Geist Mono', 'JetBrains Mono', 'Cascadia Code', ui-monospace,
+    monospace;
+}
+
 body {
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss01', 'cv11', 'cv09';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   background: transparent;
+  color: var(--text-primary);
   color-scheme: light dark;
 }
 
@@ -33,6 +47,21 @@ textarea {
   font-family: inherit;
 }
 
+/* Mono surfaces deserve tabular figures + zero ligatures so codes/UUIDs
+ * align in columns without surprise width shifts. */
+code,
+pre,
+kbd,
+.mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+}
+
+::selection {
+  background: var(--accent-ember-100);
+  color: var(--text-primary);
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -41,12 +70,12 @@ textarea {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.35);
+  background: var(--border-default);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.55);
+  background: var(--border-strong);
   background-clip: padding-box;
 }
