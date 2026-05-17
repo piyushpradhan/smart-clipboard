@@ -1,7 +1,7 @@
 {
   "name": "smart-clipboard",
   "private": true,
-  "version": "0.5.2",
+  "version": "0.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -24,6 +24,7 @@
     "@tauri-apps/plugin-global-shortcut": "^2.3.1",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-store": "^2.4.2",
+    "ember-design-system": "github:piyushpradhan/ember-design-system#4b9df15",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

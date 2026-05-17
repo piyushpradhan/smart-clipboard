@@ -2,6 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { PaletteWindow } from "./windows/PaletteWindow";
+import "ember-design-system/tokens.css";
+import "ember-design-system/styles.css";
 import "./styles/global.css";
 
 const rootEl = document.getElementById("root");

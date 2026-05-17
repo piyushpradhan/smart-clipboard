@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { Button, Input } from "ember-design-system";
 import { relTime } from "../lib/time";
 import type { ClipItem, Theme } from "../lib/types";
 import type { AppState } from "../hooks/useAppState";
@@ -25,39 +25,13 @@ function ImagePreview({
     <img
       src={url}
       alt={item.preview}
-      style={{ maxWidth: "100%", maxHeight: 400, borderRadius: 8, background: t.bgSurfaceAlt }}
-    />
-  );
-}
-
-interface ActBtnProps {
-  t: Theme;
-  primary?: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}
-
-function ActBtn({ t, primary = false, onClick, children }: ActBtnProps) {
-  return (
-    <button
-      onClick={onClick}
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "6px 10px",
-        fontFamily: t.fontUi,
-        fontSize: 12,
-        fontWeight: 500,
-        color: primary ? "#fff" : t.fgMuted,
-        background: primary ? t.accent : "transparent",
-        border: `1px solid ${primary ? t.accent : t.borderSoft}`,
-        borderRadius: 5,
-        cursor: "pointer",
+        maxWidth: "100%",
+        maxHeight: 400,
+        borderRadius: 8,
+        background: t.bgSurfaceAlt,
       }}
-    >
-      {children}
-    </button>
+    />
   );
 }
 
@@ -68,11 +42,6 @@ interface PreviewPaneProps {
   editing: boolean;
   setEditing: (v: boolean) => void;
   app: AppState;
-  /**
-   * True when the Anthropic key is set — drives whether we promise the user
-   * "Labeling…" (AI worker will upgrade the label) vs. just showing the
-   * preview fallback in a muted style (no AI to wait for).
-   */
   anthropicEnabled: boolean;
 }
 
@@ -135,7 +104,7 @@ export function PreviewPane({
         </div>
         {showLabels &&
           (editing ? (
-            <input
+            <Input
               autoFocus
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
@@ -152,19 +121,6 @@ export function PreviewPane({
                   setDraft(item.label);
                   setEditing(false);
                 }
-              }}
-              style={{
-                width: "100%",
-                fontSize: 17,
-                fontWeight: 600,
-                letterSpacing: -0.3,
-                color: t.fg,
-                background: "transparent",
-                border: `1px solid ${t.accent}`,
-                borderRadius: 6,
-                padding: "4px 8px",
-                outline: "none",
-                fontFamily: t.fontUi,
               }}
             />
           ) : (
@@ -237,21 +193,42 @@ export function PreviewPane({
           flexWrap: "wrap",
         }}
       >
-        <ActBtn t={t} primary onClick={() => app.copyItem(item.id)}>
-          Copy{" "}
-          <Kbd t={t} accent>
-            ↵
-          </Kbd>
-        </ActBtn>
-        <ActBtn t={t} onClick={() => app.pinItem(item.id)}>
-          {item.pinned ? "Unpin" : "Pin"} <Kbd t={t}>⌘P</Kbd>
-        </ActBtn>
-        <ActBtn t={t} onClick={() => app.deleteItem(item.id)}>
-          Delete <Kbd t={t}>⌫</Kbd>
-        </ActBtn>
-        <ActBtn t={t} onClick={() => setEditing(true)}>
-          Rename <Kbd t={t}>E</Kbd>
-        </ActBtn>
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={() => app.copyItem(item.id)}
+          trailingIcon={
+            <Kbd t={t} accent>
+              ↵
+            </Kbd>
+          }
+        >
+          Copy
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => app.pinItem(item.id)}
+          trailingIcon={<Kbd t={t}>⌘P</Kbd>}
+        >
+          {item.pinned ? "Unpin" : "Pin"}
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => app.deleteItem(item.id)}
+          trailingIcon={<Kbd t={t}>⌫</Kbd>}
+        >
+          Delete
+        </Button>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setEditing(true)}
+          trailingIcon={<Kbd t={t}>E</Kbd>}
+        >
+          Rename
+        </Button>
       </div>
     </div>
   );

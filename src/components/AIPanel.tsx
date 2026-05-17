@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button, Input, Modal, Select } from "ember-design-system";
 import type { Theme } from "../lib/types";
 import type { EmbedProvider, EmbedSettings } from "../hooks/useSettings";
 
@@ -9,7 +10,7 @@ interface AIPanelProps {
   onClose: () => void;
 }
 
-const PROVIDERS: { id: EmbedProvider; label: string; note?: string }[] = [
+const PROVIDERS: { id: EmbedProvider; label: string }[] = [
   { id: "local", label: "Local (default)" },
   { id: "openai", label: "OpenAI" },
   { id: "ollama", label: "Ollama" },
@@ -63,275 +64,161 @@ export function AIPanel({ t, settings, onChange, onClose }: AIPanelProps) {
     ? "On — Claude Haiku generates labels in the background."
     : "Off — items show a content preview as their label.";
 
-  const inputStyle = {
-    background: t.bgSurfaceAlt,
-    color: t.fg,
-    border: `1px solid ${t.borderSoft}`,
-    borderRadius: 6,
-    padding: "6px 10px",
-    fontSize: 12,
-    fontFamily: t.fontMono,
-    width: "100%",
-    outline: "none" as const,
-  };
-
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.45)",
-        display: "grid",
-        placeItems: "center",
-        zIndex: 700,
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          width: 460,
-          maxHeight: 560,
-          overflow: "auto",
-          padding: 20,
-          background: t.bgSurface,
-          color: t.fg,
-          border: `1px solid ${t.border}`,
-          borderRadius: 12,
-          fontFamily: t.fontUi,
-          fontSize: 13,
-          boxShadow: "0 30px 80px rgba(0,0,0,0.5)",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: 12,
-          }}
-        >
-          <span style={{ fontWeight: 600, fontSize: 14 }}>
-            Semantic search
-          </span>
-          <button
-            onClick={onClose}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: t.fgFaint,
-              cursor: "pointer",
-              fontSize: 14,
-            }}
-          >
-            ✕
-          </button>
-        </div>
-
-        <p
-          style={{
-            margin: "0 0 14px",
-            fontSize: 11.5,
-            color: t.fgMuted,
-            lineHeight: 1.5,
-          }}
-        >
-          Two independent AI features. Semantic search uses a{" "}
-          <b>bundled local embedding model</b> by default — no API key, no
-          network after the first download. The <b>Anthropic key</b> below is
-          only needed for one-line intent labels via Claude Haiku.
-        </p>
-
-        <StatusRow
-          t={t}
-          kind={embedStatus.kind}
-          label="Semantic search"
-          detail={embedStatus.text}
-        />
-        <StatusRow
-          t={t}
-          kind={local.anthropic_api_key.trim() ? "ok" : "off"}
-          label="AI labels"
-          detail={labelStatus}
-        />
-
-        <div style={{ marginBottom: 16 }}>
-          <div style={labelStyle(t)}>Provider</div>
-          <div style={{ display: "flex", gap: 6 }}>
-            {PROVIDERS.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => set("provider", p.id)}
-                style={{
-                  padding: "6px 12px",
-                  fontFamily: t.fontMono,
-                  fontSize: 11,
-                  color: local.provider === p.id ? "#fff" : t.fgMuted,
-                  background: local.provider === p.id ? t.accent : "transparent",
-                  border: `1px solid ${
-                    local.provider === p.id ? t.accent : t.borderSoft
-                  }`,
-                  borderRadius: 5,
-                  cursor: "pointer",
-                  letterSpacing: 0.4,
-                  textTransform: "uppercase",
-                }}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {local.provider === "local" && (
-          <>
-            <Field t={t} label="Embedding model">
-              <select
-                value={local.local_model}
-                onChange={(e) => set("local_model", e.target.value)}
-                style={inputStyle}
-              >
-                {LOCAL_MODELS.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <p
-              style={{
-                fontSize: 10.5,
-                color: t.fgFaint,
-                marginTop: -6,
-                lineHeight: 1.5,
-              }}
-            >
-              {LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
-                "Runs entirely on your machine via ONNX."}{" "}
-              The first embedding may take a few seconds while the model
-              downloads.
-            </p>
-          </>
-        )}
-
-        {local.provider === "openai" && (
-          <>
-            <Field t={t} label="OpenAI API key">
-              <input
-                type="password"
-                value={local.openai_api_key}
-                onChange={(e) => set("openai_api_key", e.target.value)}
-                placeholder="sk-…"
-                style={inputStyle}
-              />
-            </Field>
-            <Field t={t} label="Model">
-              <input
-                value={local.openai_model}
-                onChange={(e) => set("openai_model", e.target.value)}
-                style={inputStyle}
-              />
-            </Field>
-          </>
-        )}
-
-        {local.provider === "ollama" && (
-          <>
-            <Field t={t} label="Ollama URL">
-              <input
-                value={local.ollama_url}
-                onChange={(e) => set("ollama_url", e.target.value)}
-                style={inputStyle}
-              />
-            </Field>
-            <Field t={t} label="Embedding model">
-              <input
-                value={local.ollama_model}
-                onChange={(e) => set("ollama_model", e.target.value)}
-                style={inputStyle}
-              />
-            </Field>
-            <p
-              style={{
-                fontSize: 10.5,
-                color: t.fgFaint,
-                marginTop: 4,
-                lineHeight: 1.4,
-              }}
-            >
-              Install an embedding model first:{" "}
-              <code
-                style={{
-                  fontFamily: t.fontMono,
-                  color: t.fgMuted,
-                  background: t.bgSurfaceAlt,
-                  padding: "1px 5px",
-                  borderRadius: 3,
-                }}
-              >
-                ollama pull {local.ollama_model}
-              </code>
-            </p>
-          </>
-        )}
-
-        <div style={{ marginTop: 18, borderTop: `1px solid ${t.borderSoft}`, paddingTop: 14 }}>
-          <Field t={t} label="Anthropic API key — AI labels">
-            <input
-              type="password"
-              value={local.anthropic_api_key}
-              onChange={(e) => set("anthropic_api_key", e.target.value)}
-              placeholder="sk-ant-…"
-              style={inputStyle}
-            />
-          </Field>
-          <p
-            style={{
-              fontSize: 10.5,
-              color: t.fgFaint,
-              marginTop: -6,
-              lineHeight: 1.5,
-            }}
-          >
-            Each clip gets a one-line intent summary (e.g. "Stripe Webhook
-            Debug"). Runs on Claude Haiku in the background. A few hundred
-            clips cost pennies.
-          </p>
-        </div>
-
-        {error && (
-          <div
-            role="alert"
-            style={{
-              marginTop: 14,
-              padding: "8px 10px",
-              fontSize: 11.5,
-              color: "#f3b5a8",
-              background: "rgba(201,75,58,0.12)",
-              border: "1px solid rgba(201,75,58,0.5)",
-              borderRadius: 6,
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <div style={{ display: "flex", gap: 8, marginTop: 18, justifyContent: "flex-end" }}>
-          <button
-            onClick={onClose}
-            style={btnStyle(t, false)}
-          >
+    <Modal
+      open
+      onClose={onClose}
+      title="Semantic search"
+      description="Two independent AI features: local-by-default embeddings for search, plus optional Claude Haiku for one-line intent labels."
+      size="md"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
             Cancel
-          </button>
-          <button
-            onClick={save}
-            style={btnStyle(t, true)}
-          >
+          </Button>
+          <Button variant="primary" onClick={save}>
             Save
-          </button>
+          </Button>
+        </>
+      }
+    >
+      <StatusRow
+        t={t}
+        kind={embedStatus.kind}
+        label="Semantic search"
+        detail={embedStatus.text}
+      />
+      <StatusRow
+        t={t}
+        kind={local.anthropic_api_key.trim() ? "ok" : "off"}
+        label="AI labels"
+        detail={labelStatus}
+      />
+
+      <div style={{ marginBottom: 16 }}>
+        <div style={labelStyle(t)}>Provider</div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {PROVIDERS.map((p) => (
+            <Button
+              key={p.id}
+              size="sm"
+              variant={local.provider === p.id ? "primary" : "secondary"}
+              onClick={() => set("provider", p.id)}
+            >
+              {p.label}
+            </Button>
+          ))}
         </div>
       </div>
-    </div>
+
+      {local.provider === "local" && (
+        <>
+          <Field t={t} label="Embedding model">
+            <Select
+              value={local.local_model}
+              onChange={(v) => set("local_model", v)}
+              options={LOCAL_MODELS.map((m) => ({ value: m.id, label: m.label }))}
+              aria-label="Embedding model"
+            />
+          </Field>
+          <p style={hintStyle(t)}>
+            {LOCAL_MODELS.find((m) => m.id === local.local_model)?.note ??
+              "Runs entirely on your machine via ONNX."}{" "}
+            The first embedding may take a few seconds while the model
+            downloads.
+          </p>
+        </>
+      )}
+
+      {local.provider === "openai" && (
+        <>
+          <Field t={t} label="OpenAI API key">
+            <Input
+              type="password"
+              value={local.openai_api_key}
+              onChange={(e) => set("openai_api_key", e.target.value)}
+              placeholder="sk-…"
+            />
+          </Field>
+          <Field t={t} label="Model">
+            <Input
+              value={local.openai_model}
+              onChange={(e) => set("openai_model", e.target.value)}
+            />
+          </Field>
+        </>
+      )}
+
+      {local.provider === "ollama" && (
+        <>
+          <Field t={t} label="Ollama URL">
+            <Input
+              value={local.ollama_url}
+              onChange={(e) => set("ollama_url", e.target.value)}
+            />
+          </Field>
+          <Field t={t} label="Embedding model">
+            <Input
+              value={local.ollama_model}
+              onChange={(e) => set("ollama_model", e.target.value)}
+            />
+          </Field>
+          <p style={hintStyle(t)}>
+            Install an embedding model first:{" "}
+            <code
+              style={{
+                fontFamily: t.fontMono,
+                color: t.fgMuted,
+                background: t.bgSurfaceAlt,
+                padding: "1px 5px",
+                borderRadius: 3,
+              }}
+            >
+              ollama pull {local.ollama_model}
+            </code>
+          </p>
+        </>
+      )}
+
+      <div
+        style={{
+          marginTop: 18,
+          borderTop: `1px solid ${t.borderSoft}`,
+          paddingTop: 14,
+        }}
+      >
+        <Field t={t} label="Anthropic API key — AI labels">
+          <Input
+            type="password"
+            value={local.anthropic_api_key}
+            onChange={(e) => set("anthropic_api_key", e.target.value)}
+            placeholder="sk-ant-…"
+          />
+        </Field>
+        <p style={hintStyle(t)}>
+          Each clip gets a one-line intent summary (e.g. "Stripe Webhook
+          Debug"). Runs on Claude Haiku in the background. A few hundred clips
+          cost pennies.
+        </p>
+      </div>
+
+      {error && (
+        <div
+          role="alert"
+          style={{
+            marginTop: 14,
+            padding: "8px 10px",
+            fontSize: 11.5,
+            color: "var(--status-danger)",
+            background: "var(--bg-subtle)",
+            border: "1px solid var(--status-danger)",
+            borderRadius: 6,
+          }}
+        >
+          {error}
+        </div>
+      )}
+    </Modal>
   );
 }
 
@@ -343,6 +230,15 @@ function labelStyle(t: Theme) {
     letterSpacing: 0.4,
     textTransform: "uppercase" as const,
     marginBottom: 6,
+  };
+}
+
+function hintStyle(t: Theme) {
+  return {
+    fontSize: 10.5,
+    color: t.fgFaint,
+    marginTop: -4,
+    lineHeight: 1.5,
   };
 }
 
@@ -363,20 +259,6 @@ function Field({
   );
 }
 
-function btnStyle(t: Theme, primary: boolean) {
-  return {
-    padding: "6px 14px",
-    fontFamily: t.fontUi,
-    fontSize: 12,
-    fontWeight: 500,
-    color: primary ? "#fff" : t.fg,
-    background: primary ? t.accent : "transparent",
-    border: `1px solid ${primary ? t.accent : t.borderSoft}`,
-    borderRadius: 6,
-    cursor: "pointer",
-  };
-}
-
 type StatusKind = "ok" | "off" | "warn";
 
 interface StatusRowProps {
@@ -388,7 +270,11 @@ interface StatusRowProps {
 
 function StatusRow({ t, kind, label, detail }: StatusRowProps) {
   const colour =
-    kind === "ok" ? "#4caf7a" : kind === "warn" ? "#e0a02a" : t.fgFaint;
+    kind === "ok"
+      ? "var(--status-success)"
+      : kind === "warn"
+        ? "var(--status-warning)"
+        : t.fgFaint;
   return (
     <div
       style={{
