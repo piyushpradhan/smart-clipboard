@@ -661,7 +661,7 @@ export function Library({
               borderRadius: 3,
             }}
           >
-            v0.6.2
+            v0.6.3
           </span>
         </div>
         <div style={{ display: 'flex', alignSelf: 'stretch' }}>
