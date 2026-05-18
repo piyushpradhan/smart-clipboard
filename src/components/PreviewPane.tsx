@@ -72,7 +72,7 @@ export function PreviewPane({
     >
       <div
         style={{
-          padding: '16px 22px 12px',
+          padding: '16px 20px 12px',
           borderBottom: `1px solid ${t.borderSoft}`,
         }}
       >
@@ -82,6 +82,7 @@ export function PreviewPane({
             alignItems: 'center',
             gap: 10,
             marginBottom: 8,
+            minHeight: 18,
           }}
         >
           <CategoryChip t={t} cat={item.category} mode="chip" />
@@ -90,15 +91,24 @@ export function PreviewPane({
               fontSize: 11,
               color: t.fgFaint,
               fontFamily: t.fontMono,
+              fontVariantNumeric: 'tabular-nums',
               flex: 1,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              lineHeight: 1,
             }}
           >
             {item.source} · {relTime(item.minutesAgo)}
           </span>
-          {item.pinned && <span style={{ color: t.accent, fontSize: 12 }}>★</span>}
+          {item.pinned && (
+            <span
+              style={{ color: t.accent, fontSize: 12, lineHeight: 1, flexShrink: 0 }}
+              aria-label="pinned"
+            >
+              ★
+            </span>
+          )}
         </div>
         {showLabels &&
           (editing ? (
@@ -163,8 +173,9 @@ export function PreviewPane({
                     letterSpacing: 1,
                     textTransform: 'uppercase',
                     border: `1px solid ${t.borderSoft}`,
-                    padding: '2px 6px',
+                    padding: '3px 6px',
                     borderRadius: 3,
+                    lineHeight: 1,
                     flexShrink: 0,
                   }}
                 >
@@ -174,7 +185,7 @@ export function PreviewPane({
             </div>
           ))}
       </div>
-      <div style={{ flex: 1, overflow: 'auto', padding: '18px 22px' }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
         {item.category === 'image' ? (
           <ImagePreview t={t} item={item} getImage={app.getImage} />
         ) : (
@@ -186,7 +197,7 @@ export function PreviewPane({
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          padding: '12px 16px',
+          padding: '12px 20px',
           borderTop: `1px solid ${t.borderSoft}`,
           background: t.bgSurface,
           flexWrap: 'wrap',

@@ -57,6 +57,7 @@ export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
           fontFamily: t.fontMono,
           fontSize: 11,
           fontWeight: 700,
+          lineHeight: 1,
           border: `1px solid ${c.border}`,
           flexShrink: 0,
         }}
@@ -71,18 +72,19 @@ export function CategoryChip({ t, cat, mode = 'chip' }: CategoryChipProps) {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 4,
-        padding: '2px 8px',
+        height: 18,
+        padding: '0 6px',
         fontFamily: t.fontMono,
-        fontSize: 10.5,
-        fontWeight: 500,
+        fontSize: 10,
+        fontWeight: 600,
         color: c.ink,
         background: c.bg,
         border: `1px solid ${c.border}`,
         borderRadius: 4,
-        letterSpacing: 0.5,
+        letterSpacing: 0.6,
         textTransform: 'uppercase',
-        lineHeight: 1.4,
+        lineHeight: 1,
+        flexShrink: 0,
       }}
     >
       {c.mono}
@@ -199,10 +201,10 @@ export function ItemBody({ t, item, compact = false }: ItemBodyProps) {
           fontSize: compact ? 11.5 : 12.5,
           lineHeight: 1.55,
           color: t.fg,
-          background: t.dark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.03)',
+          background: 'color-mix(in oklab, var(--text-primary) 4%, var(--bg-subtle))',
           border: `1px solid ${t.borderSoft}`,
-          borderRadius: 6,
-          padding: compact ? '8px 10px' : '12px 14px',
+          borderRadius: 8,
+          padding: compact ? '8px 12px' : '12px 16px',
           overflow: 'auto',
           whiteSpace: 'pre',
         }}

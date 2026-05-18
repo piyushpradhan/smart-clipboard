@@ -1,28 +1,28 @@
-import { useEffect, useMemo, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { Button, useTheme } from "ember-design-system";
-import { AIPanel } from "./components/AIPanel";
-import { KeyboardMap } from "./components/KeyboardMap";
-import { ShortcutHint } from "./components/ShortcutHint";
-import { Toast } from "./components/Toast";
-import { TweaksPanel } from "./components/TweaksPanel";
-import { useAppState } from "./hooks/useAppState";
-import { isSemanticAvailable, useSettings } from "./hooks/useSettings";
-import { buildTheme } from "./lib/theme";
-import type { Tweaks } from "./lib/types";
-import { Library } from "./windows/Library";
+import { useEffect, useMemo, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { Button, useTheme } from 'ember-design-system';
+import { AIPanel } from './components/AIPanel';
+import { KeyboardMap } from './components/KeyboardMap';
+import { ShortcutHint } from './components/ShortcutHint';
+import { Toast } from './components/Toast';
+import { TweaksPanel } from './components/TweaksPanel';
+import { useAppState } from './hooks/useAppState';
+import { isSemanticAvailable, useSettings } from './hooks/useSettings';
+import { buildTheme } from './lib/theme';
+import type { Tweaks } from './lib/types';
+import { Library } from './windows/Library';
 
 const DEFAULT_TWEAKS: Tweaks = {
-  theme: "dark",
-  density: "comfy",
-  categoryDisplay: "chip",
+  theme: 'dark',
+  density: 'comfy',
+  categoryDisplay: 'chip',
   showLabels: true,
-  previewMode: "split",
+  previewMode: 'split',
 };
 
 async function loadHintDismissed(): Promise<boolean> {
   try {
-    return await invoke<boolean>("get_hint_dismissed");
+    return await invoke<boolean>('get_hint_dismissed');
   } catch {
     return false;
   }
@@ -30,7 +30,7 @@ async function loadHintDismissed(): Promise<boolean> {
 
 async function loadShortcut(): Promise<{ modifiers: number; key: string } | null> {
   try {
-    return await invoke<{ modifiers: number; key: string }>("get_shortcut");
+    return await invoke<{ modifiers: number; key: string }>('get_shortcut');
   } catch {
     return null;
   }
@@ -38,7 +38,7 @@ async function loadShortcut(): Promise<{ modifiers: number; key: string } | null
 
 async function saveHintDismissed(dismissed: boolean) {
   try {
-    await invoke("set_hint_dismissed", { dismissed });
+    await invoke('set_hint_dismissed', { dismissed });
   } catch {
     // non-critical
   }
@@ -51,12 +51,12 @@ const MOD_META = 0x40;
 
 function labelForShortcut(modifiers: number, key: string): string {
   const parts: string[] = [];
-  if (modifiers & MOD_CONTROL) parts.push("Ctrl");
-  if (modifiers & MOD_ALT) parts.push("Alt");
-  if (modifiers & MOD_SHIFT) parts.push("Shift");
-  if (modifiers & MOD_META) parts.push("Meta");
-  parts.push(key.startsWith("Key") ? key.slice(3) : key);
-  return parts.join("+");
+  if (modifiers & MOD_CONTROL) parts.push('Ctrl');
+  if (modifiers & MOD_ALT) parts.push('Alt');
+  if (modifiers & MOD_SHIFT) parts.push('Shift');
+  if (modifiers & MOD_META) parts.push('Meta');
+  parts.push(key.startsWith('Key') ? key.slice(3) : key);
+  return parts.join('+');
 }
 
 function App() {
@@ -74,10 +74,7 @@ function App() {
     setTheme(tweaks.theme);
   }, [tweaks.theme, setTheme]);
 
-  const t = useMemo(
-    () => buildTheme(tweaks.theme, tweaks.density),
-    [tweaks.theme, tweaks.density],
-  );
+  const t = useMemo(() => buildTheme(tweaks.theme, tweaks.density), [tweaks.theme, tweaks.density]);
 
   const semanticAvailable = isSemanticAvailable(settings);
   const anthropicEnabled = settings.anthropic_api_key.trim().length > 0;
@@ -90,39 +87,38 @@ function App() {
         setTweaks((prev) => ({ ...prev, paletteShortcut: label }));
       }
     });
-    void invoke<boolean>("get_autostart")
+    void invoke<boolean>('get_autostart')
       .then((enabled) => setTweaks((prev) => ({ ...prev, autostart: enabled })))
       .catch(() => {});
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "?") {
+      if (e.key === '?') {
         const target = e.target as HTMLElement | null;
-        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA"))
-          return;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
         e.preventDefault();
         setKeymapOpen((v) => !v);
-      } else if (e.key === "Escape") {
+      } else if (e.key === 'Escape') {
         if (keymapOpen) setKeymapOpen(false);
         if (tweaksOpen) setTweaksOpen(false);
       }
     };
-    document.addEventListener("keydown", onKey, true);
-    window.addEventListener("keydown", onKey, true);
+    document.addEventListener('keydown', onKey, true);
+    window.addEventListener('keydown', onKey, true);
     return () => {
-      document.removeEventListener("keydown", onKey, true);
-      window.removeEventListener("keydown", onKey, true);
+      document.removeEventListener('keydown', onKey, true);
+      window.removeEventListener('keydown', onKey, true);
     };
   }, [keymapOpen, tweaksOpen]);
 
   return (
     <div
       style={{
-        width: "100%",
-        height: "100%",
+        width: '100%',
+        height: '100%',
         background: t.micaBg,
         color: t.fg,
         fontFamily: t.fontUi,
-        overflow: "hidden",
-        position: "relative",
+        overflow: 'hidden',
+        position: 'relative',
       }}
     >
       <Library
@@ -138,22 +134,44 @@ function App() {
       {app.backfill && app.backfill.remaining > 0 && (
         <div
           style={{
-            position: "fixed",
+            position: 'fixed',
             top: 8,
-            left: "50%",
-            transform: "translateX(-50%)",
-            padding: "4px 12px",
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            height: 24,
+            padding: '0 12px',
             fontFamily: t.fontMono,
             fontSize: 10.5,
+            fontVariantNumeric: 'tabular-nums',
             color: t.accentInk,
             background: t.accentSoft,
-            border: `1px solid ${t.accentSoft}`,
-            borderRadius: 5,
+            border: `1px solid color-mix(in oklab, ${t.accent} 24%, transparent)`,
+            borderRadius: 999,
+            boxShadow: 'var(--shadow-sm)',
             zIndex: 300,
           }}
         >
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 999,
+              background: t.accent,
+              animation: 'backfillPulse 1.2s ease-in-out infinite',
+            }}
+            aria-hidden
+          />
           Embedding {app.backfill.remaining} item
-          {app.backfill.remaining === 1 ? "" : "s"}…
+          {app.backfill.remaining === 1 ? '' : 's'}…
+          <style>{`
+            @keyframes backfillPulse {
+              0%, 100% { opacity: 0.5; }
+              50% { opacity: 1; }
+            }
+          `}</style>
         </div>
       )}
 
@@ -169,17 +187,17 @@ function App() {
 
       <div
         style={{
-          position: "fixed",
+          position: 'fixed',
           top: 8,
           right: 150,
-          display: "flex",
+          display: 'flex',
           gap: 6,
           zIndex: 200,
         }}
       >
         <Button
           size="sm"
-          variant={settings.provider !== "disabled" ? "primary" : "ghost"}
+          variant={settings.provider !== 'disabled' ? 'primary' : 'ghost'}
           onClick={() => setAiOpen(true)}
           title="Semantic search"
         >
@@ -212,7 +230,7 @@ function App() {
           onClose={() => setTweaksOpen(false)}
           onAfterClear={() => {
             void app.refresh();
-            app.showToast("History cleared", "delete");
+            app.showToast('History cleared', 'delete');
           }}
         />
       )}
@@ -221,11 +239,11 @@ function App() {
         <div
           onClick={() => setKeymapOpen(false)}
           style={{
-            position: "fixed",
+            position: 'fixed',
             inset: 0,
-            background: "rgba(0,0,0,0.45)",
-            display: "grid",
-            placeItems: "center",
+            background: 'rgba(0,0,0,0.45)',
+            display: 'grid',
+            placeItems: 'center',
             zIndex: 700,
           }}
         >
@@ -235,9 +253,9 @@ function App() {
               width: 820,
               height: 420,
               borderRadius: 12,
-              overflow: "hidden",
+              overflow: 'hidden',
               border: `1px solid ${t.border}`,
-              boxShadow: "var(--shadow-md)",
+              boxShadow: 'var(--shadow-md)',
             }}
           >
             <KeyboardMap t={t} />

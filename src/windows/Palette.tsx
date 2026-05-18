@@ -71,12 +71,15 @@ function PaletteRow({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 14,
-        padding: `${t.dense ? 7 : 10}px 12px`,
+        gap: 12,
+        padding: `${t.dense ? 8 : 10}px 12px`,
         borderRadius: 8,
         background: selected ? t.bgSelected : 'transparent',
+        boxShadow: selected ? `inset 3px 0 0 ${t.accent}` : 'none',
         cursor: 'pointer',
         position: 'relative',
+        transition:
+          'background var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard)',
       }}
     >
       {categoryMode === 'chip' && <CategoryChip t={t} cat={item.category} mode="chip" />}
@@ -183,8 +186,10 @@ function PaletteRow({
           fontSize: 11,
           color: t.fgFaint,
           fontFamily: t.fontMono,
+          fontVariantNumeric: 'tabular-nums',
           minWidth: 42,
           textAlign: 'right',
+          lineHeight: 1,
           flexShrink: 0,
         }}
       >
@@ -593,7 +598,7 @@ export function Palette({
             <>
               <div
                 style={{
-                  padding: '12px 16px',
+                  padding: '14px 20px',
                   borderBottom: `1px solid ${t.borderSoft}`,
                   background: t.bgSurface,
                 }}
@@ -602,8 +607,9 @@ export function Palette({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
-                    marginBottom: 6,
+                    gap: 10,
+                    marginBottom: 8,
+                    minHeight: 16,
                   }}
                 >
                   <CategoryChip t={t} cat={selectedItem.category} mode="chip" />
@@ -612,24 +618,41 @@ export function Palette({
                       fontSize: 11,
                       color: t.fgFaint,
                       fontFamily: t.fontMono,
+                      fontVariantNumeric: 'tabular-nums',
+                      flex: 1,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     {selectedItem.source} · {relTime(selectedItem.minutesAgo)}
                   </span>
-                  {selectedItem.pinned && <span style={{ color: t.accent, fontSize: 11 }}>★</span>}
+                  {selectedItem.pinned && (
+                    <span style={{ color: t.accent, fontSize: 12, lineHeight: 1 }}>★</span>
+                  )}
                 </div>
                 <div
                   style={{
                     fontSize: 15,
                     fontWeight: 600,
                     letterSpacing: -0.2,
+                    lineHeight: 1.3,
                     color: t.fg,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
+                    gap: 10,
                   }}
                 >
-                  {selectedItem.label}
+                  <span
+                    style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      minWidth: 0,
+                    }}
+                  >
+                    {selectedItem.label}
+                  </span>
                   {!selectedItem.labelGenerated && (
                     <span
                       style={{
@@ -640,8 +663,10 @@ export function Palette({
                         letterSpacing: 1,
                         textTransform: 'uppercase',
                         border: `1px solid ${t.borderSoft}`,
-                        padding: '2px 5px',
+                        padding: '2px 6px',
                         borderRadius: 3,
+                        lineHeight: 1,
+                        flexShrink: 0,
                       }}
                     >
                       Pending
@@ -681,9 +706,10 @@ export function Palette({
               <div
                 style={{
                   display: 'flex',
+                  alignItems: 'center',
                   flexWrap: 'wrap',
                   gap: 8,
-                  padding: '10px 14px',
+                  padding: '12px 20px',
                   borderTop: `1px solid ${t.borderSoft}`,
                   background: t.bgSurface,
                 }}
