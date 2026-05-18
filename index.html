@@ -4,12 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Recall</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
+    <!--
+      Fonts are bundled via @fontsource (see src/main.tsx). The Tauri CSP
+      pins font-src to 'self', so the previous Google Fonts <link> never
+      actually resolved at runtime — fall back to system fonts and live
+      with the bundle weight (~50 KB woff2 per weight) for predictable
+      offline rendering.
+    -->
   </head>
   <body>
     <div id="root"></div>
