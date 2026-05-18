@@ -1,15 +1,8 @@
-import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { Button, IconButton } from "ember-design-system";
-import { X } from "lucide-react";
-import type {
-  CategoryDisplay,
-  Density,
-  PreviewMode,
-  Theme,
-  ThemeMode,
-  Tweaks,
-} from "../lib/types";
+import { useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { Button, IconButton } from 'ember-design-system';
+import { X } from 'lucide-react';
+import type { CategoryDisplay, Density, PreviewMode, Theme, ThemeMode, Tweaks } from '../lib/types';
 
 interface TweaksPanelProps {
   t: Theme;
@@ -19,24 +12,16 @@ interface TweaksPanelProps {
   onAfterClear?: () => void;
 }
 
-const THEME_MODES: ThemeMode[] = ["light", "dark"];
-const DENSITIES: Density[] = ["comfy", "compact"];
-const DISPLAYS: CategoryDisplay[] = ["chip", "icon", "dot"];
-const PREVIEWS: PreviewMode[] = ["split", "inline"];
+const THEME_MODES: ThemeMode[] = ['light', 'dark'];
+const DENSITIES: Density[] = ['comfy', 'compact'];
+const DISPLAYS: CategoryDisplay[] = ['chip', 'icon', 'dot'];
+const PREVIEWS: PreviewMode[] = ['split', 'inline'];
 
-function Section({
-  t,
-  title,
-  children,
-}: {
-  t: Theme;
-  title: string;
-  children: React.ReactNode;
-}) {
+function Section({ t, title, children }: { t: Theme; title: string; children: React.ReactNode }) {
   return (
     <div
       style={{
-        padding: "10px 16px",
+        padding: '12px 16px',
         borderBottom: `1px solid ${t.borderSoft}`,
       }}
     >
@@ -45,36 +30,28 @@ function Section({
           fontSize: 9.5,
           fontFamily: t.fontMono,
           color: t.fgFaint,
-          textTransform: "uppercase",
+          textTransform: 'uppercase',
           letterSpacing: 1.4,
           fontWeight: 600,
-          marginBottom: 8,
+          marginBottom: 10,
+          lineHeight: 1,
         }}
       >
         {title}
       </div>
-      {children}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{children}</div>
     </div>
   );
 }
 
-function Row({
-  t,
-  label,
-  children,
-}: {
-  t: Theme;
-  label: string;
-  children: React.ReactNode;
-}) {
+function Row({ t, label, children }: { t: Theme; label: string; children: React.ReactNode }) {
   return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 10,
-        padding: "4px 0",
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
         minHeight: 28,
       }}
     >
@@ -83,16 +60,18 @@ function Row({
           fontSize: 12,
           color: t.fgMuted,
           fontFamily: t.fontUi,
+          lineHeight: 1,
         }}
       >
         {label}
       </span>
       <div
         style={{
-          display: "flex",
-          gap: 4,
-          flexWrap: "wrap",
-          justifyContent: "flex-end",
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
         }}
       >
         {children}
@@ -111,25 +90,14 @@ function Chip({
   children: React.ReactNode;
 }) {
   return (
-    <Button
-      size="sm"
-      variant={active ? "primary" : "ghost"}
-      onClick={onClick}
-    >
+    <Button size="sm" variant={active ? 'primary' : 'ghost'} onClick={onClick}>
       {children}
     </Button>
   );
 }
 
-export function TweaksPanel({
-  t,
-  tweaks,
-  onChange,
-  onClose,
-  onAfterClear,
-}: TweaksPanelProps) {
-  const set = <K extends keyof Tweaks>(k: K, v: Tweaks[K]) =>
-    onChange({ ...tweaks, [k]: v });
+export function TweaksPanel({ t, tweaks, onChange, onClose, onAfterClear }: TweaksPanelProps) {
+  const set = <K extends keyof Tweaks>(k: K, v: Tweaks[K]) => onChange({ ...tweaks, [k]: v });
 
   const [clearArmed, setClearArmed] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -139,16 +107,12 @@ export function TweaksPanel({
     setClearing(true);
     setClearError(null);
     try {
-      await invoke("clear_history");
+      await invoke('clear_history');
       onAfterClear?.();
       setClearArmed(false);
     } catch (err: unknown) {
       const msg =
-        err instanceof Error
-          ? err.message
-          : typeof err === "string"
-            ? err
-            : "clear failed";
+        err instanceof Error ? err.message : typeof err === 'string' ? err : 'clear failed';
       setClearError(msg);
     } finally {
       setClearing(false);
@@ -158,7 +122,7 @@ export function TweaksPanel({
   return (
     <div
       style={{
-        position: "fixed",
+        position: 'fixed',
         top: 52,
         right: 16,
         width: 320,
@@ -168,10 +132,10 @@ export function TweaksPanel({
         borderRadius: 12,
         fontFamily: t.fontUi,
         fontSize: 13,
-        boxShadow: "var(--shadow-md)",
+        boxShadow: 'var(--shadow-md)',
         zIndex: 600,
-        overflow: "hidden",
-        animation: "tweaksIn 180ms var(--easing-standard)",
+        overflow: 'hidden',
+        animation: 'tweaksIn 180ms var(--easing-standard)',
       }}
     >
       <style>{`
@@ -184,16 +148,15 @@ export function TweaksPanel({
       {/* Header — accent stripe + mono kicker */}
       <div
         style={{
-          position: "relative",
-          padding: "14px 16px 12px",
+          position: 'relative',
+          padding: '14px 16px 12px',
           borderBottom: `1px solid ${t.borderSoft}`,
-          background:
-            "linear-gradient(180deg, var(--accent-ember-50) 0%, transparent 100%)",
+          background: 'linear-gradient(180deg, var(--accent-ember-50) 0%, transparent 100%)',
         }}
       >
         <div
           style={{
-            position: "absolute",
+            position: 'absolute',
             top: 0,
             left: 0,
             bottom: 0,
@@ -203,9 +166,9 @@ export function TweaksPanel({
         />
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
           <div>
@@ -215,7 +178,7 @@ export function TweaksPanel({
                 fontFamily: t.fontMono,
                 color: t.accentInk,
                 letterSpacing: 2,
-                textTransform: "uppercase",
+                textTransform: 'uppercase',
                 fontWeight: 600,
               }}
             >
@@ -246,29 +209,21 @@ export function TweaksPanel({
       <Section t={t} title="Appearance">
         <Row t={t} label="Theme">
           {THEME_MODES.map((m) => (
-            <Chip key={m} active={tweaks.theme === m} onClick={() => set("theme", m)}>
+            <Chip key={m} active={tweaks.theme === m} onClick={() => set('theme', m)}>
               {m}
             </Chip>
           ))}
         </Row>
         <Row t={t} label="Density">
           {DENSITIES.map((d) => (
-            <Chip
-              key={d}
-              active={tweaks.density === d}
-              onClick={() => set("density", d)}
-            >
+            <Chip key={d} active={tweaks.density === d} onClick={() => set('density', d)}>
               {d}
             </Chip>
           ))}
         </Row>
         <Row t={t} label="Preview">
           {PREVIEWS.map((p) => (
-            <Chip
-              key={p}
-              active={tweaks.previewMode === p}
-              onClick={() => set("previewMode", p)}
-            >
+            <Chip key={p} active={tweaks.previewMode === p} onClick={() => set('previewMode', p)}>
               {p}
             </Chip>
           ))}
@@ -281,28 +236,26 @@ export function TweaksPanel({
             <Chip
               key={d}
               active={tweaks.categoryDisplay === d}
-              onClick={() => set("categoryDisplay", d)}
+              onClick={() => set('categoryDisplay', d)}
             >
               {d}
             </Chip>
           ))}
         </Row>
         <Row t={t} label="Show labels">
-          <Chip active={tweaks.showLabels} onClick={() => set("showLabels", true)}>
+          <Chip active={tweaks.showLabels} onClick={() => set('showLabels', true)}>
             on
           </Chip>
-          <Chip active={!tweaks.showLabels} onClick={() => set("showLabels", false)}>
+          <Chip active={!tweaks.showLabels} onClick={() => set('showLabels', false)}>
             off
           </Chip>
         </Row>
         <Row t={t} label="Plain text only">
           <Chip
             active={tweaks.plainTextOnly ?? false}
-            onClick={() =>
-              set("plainTextOnly", !(tweaks.plainTextOnly ?? false))
-            }
+            onClick={() => set('plainTextOnly', !(tweaks.plainTextOnly ?? false))}
           >
-            {(tweaks.plainTextOnly ?? false) ? "always" : "auto"}
+            {(tweaks.plainTextOnly ?? false) ? 'always' : 'auto'}
           </Chip>
         </Row>
       </Section>
@@ -311,13 +264,21 @@ export function TweaksPanel({
         <Row t={t} label="Palette shortcut">
           <span
             style={{
-              fontSize: 11,
+              display: 'inline-flex',
+              alignItems: 'center',
+              height: 22,
+              padding: '0 8px',
+              fontSize: 10.5,
               color: t.fgMuted,
               fontFamily: t.fontMono,
-              padding: "0 6px",
+              fontVariantNumeric: 'tabular-nums',
+              background: 'color-mix(in oklab, var(--text-primary) 6%, transparent)',
+              border: `1px solid ${t.borderSoft}`,
+              borderRadius: 4,
+              lineHeight: 1,
             }}
           >
-            {tweaks.paletteShortcut ?? "Ctrl+Shift+Space"}
+            {tweaks.paletteShortcut ?? 'Ctrl+Shift+Space'}
           </span>
           <Button
             size="sm"
@@ -325,19 +286,16 @@ export function TweaksPanel({
             onClick={() => {
               const CTRL = 0x08;
               const SHIFT = 0x200;
-              const switchingToCtrlSpace =
-                tweaks.paletteShortcut === "Ctrl+Shift+Space";
+              const switchingToCtrlSpace = tweaks.paletteShortcut === 'Ctrl+Shift+Space';
               const next: Tweaks = {
                 ...tweaks,
-                paletteShortcut: switchingToCtrlSpace
-                  ? "Ctrl+Space"
-                  : "Ctrl+Shift+Space",
+                paletteShortcut: switchingToCtrlSpace ? 'Ctrl+Space' : 'Ctrl+Shift+Space',
               };
               onChange(next);
-              void invoke("set_shortcut", {
+              void invoke('set_shortcut', {
                 sc: {
                   modifiers: switchingToCtrlSpace ? CTRL : CTRL | SHIFT,
-                  key: "Space",
+                  key: 'Space',
                 },
               });
             }}
@@ -351,28 +309,27 @@ export function TweaksPanel({
             onClick={() => {
               const next = !tweaks.autostart;
               onChange({ ...tweaks, autostart: next });
-              void invoke("set_autostart", { enabled: next });
+              void invoke('set_autostart', { enabled: next });
             }}
           >
-            {tweaks.autostart ? "on" : "off"}
+            {tweaks.autostart ? 'on' : 'off'}
           </Chip>
         </Row>
       </Section>
 
       <div
         style={{
-          padding: "12px 16px",
-          background:
-            "color-mix(in oklab, var(--status-danger) 5%, transparent)",
+          padding: '12px 16px',
+          background: 'color-mix(in oklab, var(--status-danger) 5%, transparent)',
         }}
       >
         <div
           style={{
             fontSize: 9.5,
-            color: "var(--status-danger)",
+            color: 'var(--status-danger)',
             fontFamily: t.fontMono,
             letterSpacing: 1.4,
-            textTransform: "uppercase",
+            textTransform: 'uppercase',
             fontWeight: 600,
             marginBottom: 8,
           }}
@@ -380,16 +337,11 @@ export function TweaksPanel({
           Danger zone
         </div>
         {!clearArmed ? (
-          <Button
-            fullWidth
-            size="sm"
-            variant="secondary"
-            onClick={() => setClearArmed(true)}
-          >
+          <Button fullWidth size="sm" variant="secondary" onClick={() => setClearArmed(true)}>
             Clear history (keeps pinned)
           </Button>
         ) : (
-          <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
             <Button
               fullWidth
               size="sm"
@@ -406,7 +358,7 @@ export function TweaksPanel({
               loading={clearing}
               onClick={() => void clear()}
             >
-              {clearing ? "Clearing…" : "Confirm"}
+              {clearing ? 'Clearing…' : 'Confirm'}
             </Button>
           </div>
         )}
@@ -416,7 +368,7 @@ export function TweaksPanel({
             style={{
               marginTop: 8,
               fontSize: 11,
-              color: "var(--status-danger)",
+              color: 'var(--status-danger)',
             }}
           >
             {clearError}

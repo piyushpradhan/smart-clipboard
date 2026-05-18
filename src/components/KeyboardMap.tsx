@@ -1,35 +1,44 @@
-import type { Theme } from "../lib/types";
+import type { Theme } from '../lib/types';
+import { Kbd } from './Primitives';
 
 interface KeyboardMapProps {
   t: Theme;
 }
 
-const GROUPS: [string, [string, string][]][] = [
+interface KeyRow {
+  keys: string[];
+  label: string;
+  /** Optional contextual label (e.g. "palette", "library") shown after the description. */
+  scope?: string;
+}
+
+const GROUPS: [string, KeyRow[]][] = [
   [
-    "Global",
+    'Global',
     [
-      ["Ctrl Shift Space", "Open palette from anywhere"],
-      ["Esc", "Close palette / clear search"],
+      { keys: ['Ctrl', 'Shift', 'Space'], label: 'Open palette from anywhere' },
+      { keys: ['Esc'], label: 'Close palette / clear search' },
     ],
   ],
   [
-    "Navigation",
+    'Navigation',
     [
-      ["↑ / ↓ · J / K", "Move selection"],
-      ["/", "Focus search"],
-      ["Tab", "Toggle fuzzy ↔ semantic (palette)"],
-      ["1 – 9", "Jump to sidebar filter (library)"],
+      { keys: ['↑', '↓'], label: 'Move selection' },
+      { keys: ['J', 'K'], label: 'Move selection (vim)' },
+      { keys: ['/'], label: 'Focus search' },
+      { keys: ['Tab'], label: 'Toggle fuzzy ↔ semantic', scope: 'palette' },
+      { keys: ['1', '–', '9'], label: 'Jump to sidebar filter', scope: 'library' },
     ],
   ],
   [
-    "Actions",
+    'Actions',
     [
-      ["↵", "Copy + paste · close palette"],
-      ["↵ (in search)", "Promote fuzzy → semantic"],
-      ["Ctrl P", "Pin / unpin"],
-      ["Ctrl ⌫  · ⌫", "Delete item"],
-      ["E", "Rename label (library)"],
-      ["Ctrl I", "Toggle preview pane (library)"],
+      { keys: ['↵'], label: 'Copy + paste · close palette' },
+      { keys: ['↵'], label: 'Promote fuzzy → semantic', scope: 'in search' },
+      { keys: ['Ctrl', 'P'], label: 'Pin / unpin' },
+      { keys: ['Ctrl', '⌫'], label: 'Delete item' },
+      { keys: ['E'], label: 'Rename label', scope: 'library' },
+      { keys: ['Ctrl', 'I'], label: 'Toggle preview pane', scope: 'library' },
     ],
   ],
 ];
@@ -38,72 +47,87 @@ export function KeyboardMap({ t }: KeyboardMapProps) {
   return (
     <div
       style={{
-        width: "100%",
-        height: "100%",
+        width: '100%',
+        height: '100%',
         background: t.bgWindow,
         color: t.fg,
-        padding: 28,
+        padding: 32,
         fontFamily: t.fontUi,
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr 1fr",
-        gap: 28,
-        overflow: "auto",
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr 1fr',
+        gap: 32,
+        overflow: 'auto',
       }}
     >
       {GROUPS.map(([heading, rows]) => (
-        <div key={heading}>
+        <div key={heading} style={{ display: 'flex', flexDirection: 'column' }}>
           <div
             style={{
-              fontSize: 10.5,
+              fontSize: 10,
               fontFamily: t.fontMono,
-              color: t.accent,
+              color: t.accentInk,
               letterSpacing: 1.5,
-              textTransform: "uppercase",
+              textTransform: 'uppercase',
               fontWeight: 600,
-              marginBottom: 12,
-              paddingBottom: 8,
+              marginBottom: 14,
+              paddingBottom: 10,
               borderBottom: `1px solid ${t.borderSoft}`,
+              lineHeight: 1,
             }}
           >
             {heading}
           </div>
-          {rows.map(([k, l], i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                padding: "8px 0",
-                gap: 12,
-              }}
-            >
-              <span
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {rows.map((row, i) => (
+              <div
+                key={i}
                 style={{
-                  fontFamily: t.fontMono,
-                  fontSize: 11,
-                  color: t.fg,
-                  minWidth: 90,
-                  padding: "3px 8px",
-                  background: t.dark
-                    ? "rgba(255,255,255,0.06)"
-                    : "rgba(0,0,0,0.04)",
-                  border: `1px solid ${t.borderSoft}`,
-                  borderRadius: 5,
+                  display: 'grid',
+                  gridTemplateColumns: '108px 1fr',
+                  alignItems: 'center',
+                  gap: 14,
                 }}
               >
-                {k}
-              </span>
-              <span
-                style={{
-                  fontSize: 12.5,
-                  color: t.fgMuted,
-                  lineHeight: 1.4,
-                }}
-              >
-                {l}
-              </span>
-            </div>
-          ))}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {row.keys.map((k, j) => (
+                    <Kbd key={j} t={t}>
+                      {k}
+                    </Kbd>
+                  ))}
+                </div>
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    color: t.fgMuted,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {row.label}
+                  {row.scope && (
+                    <span
+                      style={{
+                        marginLeft: 6,
+                        fontSize: 10,
+                        fontFamily: t.fontMono,
+                        color: t.fgFaint,
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.8,
+                      }}
+                    >
+                      · {row.scope}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ))}
     </div>

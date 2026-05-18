@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useImageUrl } from '../hooks/useImageUrl';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -154,6 +155,62 @@ function SemanticBanner({ t, count, available, error, loading }: SemanticBannerP
 // Stable no-op so useImageUrl's effect deps stay stable for non-image rows.
 const NO_IMAGE = (): Promise<Blob | null> => Promise.resolve(null);
 
+function SidebarIcon({ t, active, children }: { t: Theme; active: boolean; children: ReactNode }) {
+  return (
+    <span
+      style={{
+        width: 16,
+        height: 16,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        color: active ? t.accent : t.fgFaint,
+        fontSize: 12,
+        lineHeight: 1,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function SidebarCount({ t, children }: { t: Theme; children: ReactNode }) {
+  return (
+    <span
+      style={{
+        fontSize: 11,
+        color: t.fgFaint,
+        fontFamily: t.fontMono,
+        fontVariantNumeric: 'tabular-nums',
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function SidebarHeading({ t, children }: { t: Theme; children: ReactNode }) {
+  return (
+    <div
+      style={{
+        marginTop: 16,
+        marginBottom: 6,
+        padding: '0 10px',
+        fontSize: 10,
+        letterSpacing: 1.4,
+        textTransform: 'uppercase',
+        color: t.fgFaint,
+        fontWeight: 600,
+        fontFamily: t.fontMono,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function ListRow({
   t,
   item,
@@ -183,13 +240,14 @@ function ListRow({
       onClick={onClick}
       onDoubleClick={onDouble}
       style={{
-        padding: `${t.dense ? 7 : 10}px 10px`,
+        padding: `${t.dense ? 8 : 10}px 12px`,
         borderRadius: 6,
         background: selected ? t.bgSelected : 'transparent',
         cursor: 'pointer',
         position: 'relative',
-        borderLeft: `3px solid ${selected ? t.accent : 'transparent'}`,
-        paddingLeft: 8,
+        boxShadow: selected ? `inset 3px 0 0 ${t.accent}` : 'none',
+        transition:
+          'background var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard)',
       }}
     >
       <div
@@ -197,19 +255,33 @@ function ListRow({
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          marginBottom: 2,
+          marginBottom: 4,
+          minHeight: 16,
         }}
       >
         {categoryMode === 'chip' && <CategoryChip t={t} cat={item.category} mode="mono" />}
         {categoryMode === 'icon' && <CategoryChip t={t} cat={item.category} mode="icon" />}
         {categoryMode === 'dot' && <CategoryChip t={t} cat={item.category} mode="dot" />}
-        {item.pinned && <span style={{ color: t.accent, fontSize: 10 }}>★</span>}
+        {item.pinned && (
+          <span
+            style={{
+              color: t.accent,
+              fontSize: 11,
+              lineHeight: 1,
+            }}
+            aria-label="pinned"
+          >
+            ★
+          </span>
+        )}
         <span style={{ flex: 1 }} />
         <span
           style={{
             fontSize: 10.5,
             color: t.fgFaint,
             fontFamily: t.fontMono,
+            fontVariantNumeric: 'tabular-nums',
+            lineHeight: 1,
           }}
         >
           {relTime(item.minutesAgo)}
@@ -222,11 +294,12 @@ function ListRow({
             fontWeight: item.labelGenerated ? 500 : 400,
             fontStyle: item.labelGenerated ? 'normal' : 'italic',
             color: item.labelGenerated ? t.fg : t.fgMuted,
-            marginBottom: 2,
+            marginBottom: 4,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
             letterSpacing: -0.1,
+            lineHeight: 1.3,
             display: 'flex',
             alignItems: 'center',
             gap: 6,
@@ -244,6 +317,7 @@ function ListRow({
                 color: t.fgFaint,
                 letterSpacing: 1,
                 flexShrink: 0,
+                lineHeight: 1,
               }}
             >
               ···
@@ -256,6 +330,7 @@ function ListRow({
           fontFamily: isMono ? t.fontMono : t.fontUi,
           fontSize: 11.5,
           color: t.fgMuted,
+          lineHeight: 1.4,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -586,10 +661,10 @@ export function Library({
               borderRadius: 3,
             }}
           >
-            v0.6.1
+            v0.6.2
           </span>
         </div>
-        <div style={{ display: 'flex', height: '100%' }}>
+        <div style={{ display: 'flex', alignSelf: 'stretch' }}>
           {(
             [
               [
@@ -614,42 +689,49 @@ export function Library({
                 },
               ],
             ] as const
-          ).map(([g, title, action], i) => (
-            <button
-              key={i}
-              title={title}
-              data-tauri-drag-region="false"
-              onPointerDown={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation();
-                action();
-              }}
-              style={{
-                width: 46,
-                height: '100%',
-                display: 'grid',
-                placeItems: 'center',
-                color: t.fgMuted,
-                fontSize: 11,
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background 120ms',
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background =
-                  i === 2 ? '#e81123' : t.dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-                if (i === 2) (e.currentTarget as HTMLElement).style.color = '#fff';
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = 'transparent';
-                (e.currentTarget as HTMLElement).style.color = t.fgMuted;
-              }}
-            >
-              {g}
-            </button>
-          ))}
+          ).map(([g, title, action], i) => {
+            const isClose = i === 2;
+            return (
+              <button
+                key={i}
+                title={title}
+                data-tauri-drag-region="false"
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  action();
+                }}
+                style={{
+                  width: 46,
+                  height: 40,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: t.fgMuted,
+                  fontSize: 11,
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition:
+                    'background var(--duration-fast) var(--easing-standard), color var(--duration-fast) var(--easing-standard)',
+                }}
+                onMouseEnter={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background = isClose
+                    ? 'var(--status-danger)'
+                    : 'color-mix(in oklab, var(--text-primary) 8%, transparent)';
+                  el.style.color = isClose ? 'var(--text-inverse)' : t.fg;
+                }}
+                onMouseLeave={(e) => {
+                  const el = e.currentTarget as HTMLElement;
+                  el.style.background = 'transparent';
+                  el.style.color = t.fgMuted;
+                }}
+              >
+                {g}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -658,7 +740,7 @@ export function Library({
         {/* Sidebar */}
         <div
           style={{
-            width: 196,
+            width: 200,
             flexShrink: 0,
             borderRight: `1px solid ${t.borderSoft}`,
             padding: '12px 8px',
@@ -669,66 +751,21 @@ export function Library({
           }}
         >
           <SidebarRow t={t} active={filter === 'all'} onClick={() => setFilter('all')}>
-            <span
-              style={{
-                width: 16,
-                color: t.fgFaint,
-                fontFamily: t.fontMono,
-                fontSize: 13,
-                textAlign: 'center',
-              }}
-            >
+            <SidebarIcon t={t} active={filter === 'all'}>
               ≡
-            </span>
-            <span style={{ flex: 1 }}>All items</span>
-            <span
-              style={{
-                fontSize: 11,
-                color: t.fgFaint,
-                fontFamily: t.fontMono,
-              }}
-            >
-              {counts.all}
-            </span>
+            </SidebarIcon>
+            <span style={{ flex: 1, minWidth: 0 }}>All items</span>
+            <SidebarCount t={t}>{counts.all}</SidebarCount>
           </SidebarRow>
           <SidebarRow t={t} active={filter === 'pinned'} onClick={() => setFilter('pinned')}>
-            <span
-              style={{
-                width: 16,
-                color: t.fgFaint,
-                fontSize: 11,
-                textAlign: 'center',
-              }}
-            >
+            <SidebarIcon t={t} active={filter === 'pinned'}>
               ★
-            </span>
-            <span style={{ flex: 1 }}>Pinned</span>
-            <span
-              style={{
-                fontSize: 11,
-                color: t.fgFaint,
-                fontFamily: t.fontMono,
-              }}
-            >
-              {counts.pinned}
-            </span>
+            </SidebarIcon>
+            <span style={{ flex: 1, minWidth: 0 }}>Pinned</span>
+            <SidebarCount t={t}>{counts.pinned}</SidebarCount>
           </SidebarRow>
 
-          <div
-            style={{
-              marginTop: 14,
-              marginBottom: 4,
-              padding: '0 10px',
-              fontSize: 10,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-              color: t.fgFaint,
-              fontWeight: 600,
-              fontFamily: t.fontMono,
-            }}
-          >
-            Time
-          </div>
+          <SidebarHeading t={t}>Time</SidebarHeading>
           {(
             [
               ['all', 'Any time'],
@@ -744,50 +781,31 @@ export function Library({
               active={timeFilter === value}
               onClick={() => setTimeFilter(value)}
             >
-              <span
-                style={{
-                  width: 16,
-                  color: t.fgFaint,
-                  fontSize: 11,
-                  textAlign: 'center',
-                }}
-              >
+              <SidebarIcon t={t} active={timeFilter === value}>
                 ⌚
-              </span>
-              <span style={{ flex: 1 }}>{label}</span>
+              </SidebarIcon>
+              <span style={{ flex: 1, minWidth: 0 }}>{label}</span>
             </SidebarRow>
           ))}
 
-          <div
-            style={{
-              marginTop: 14,
-              marginBottom: 4,
-              padding: '0 10px',
-              fontSize: 10,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-              color: t.fgFaint,
-              fontWeight: 600,
-              fontFamily: t.fontMono,
-            }}
-          >
-            Categories
-          </div>
+          <SidebarHeading t={t}>Categories</SidebarHeading>
           {CATEGORIES.map((cat: Category) => {
             const meta = CATEGORY_META[cat];
             return (
               <SidebarRow key={cat} t={t} active={filter === cat} onClick={() => setFilter(cat)}>
-                <CategoryChip t={t} cat={cat} mode="dot" />
-                <span style={{ flex: 1 }}>{meta.label}</span>
                 <span
                   style={{
-                    fontSize: 11,
-                    color: t.fgFaint,
-                    fontFamily: t.fontMono,
+                    width: 16,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
                   }}
                 >
-                  {counts[cat] || 0}
+                  <CategoryChip t={t} cat={cat} mode="dot" />
                 </span>
+                <span style={{ flex: 1, minWidth: 0 }}>{meta.label}</span>
+                <SidebarCount t={t}>{counts[cat] || 0}</SidebarCount>
               </SidebarRow>
             );
           })}
@@ -795,19 +813,30 @@ export function Library({
           <div
             style={{
               marginTop: 'auto',
-              padding: '12px 10px 4px',
-              fontSize: 10,
+              padding: '16px 10px 4px',
+              fontSize: 10.5,
               color: t.fgFaint,
-              lineHeight: 1.5,
+              lineHeight: 1,
               fontFamily: t.fontMono,
               letterSpacing: 0.3,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
             }}
           >
-            <div>
-              <Kbd t={t}>/</Kbd> search &nbsp; <Kbd t={t}>1-9</Kbd> filter
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <Kbd t={t}>/</Kbd>
+              <span>search</span>
+              <span style={{ flex: 1 }} />
+              <Kbd t={t}>1–9</Kbd>
+              <span>filter</span>
             </div>
-            <div style={{ marginTop: 4 }}>
-              <Kbd t={t}>E</Kbd> rename &nbsp; <Kbd t={t}>⌘I</Kbd> preview
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <Kbd t={t}>E</Kbd>
+              <span>rename</span>
+              <span style={{ flex: 1 }} />
+              <Kbd t={t}>⌘I</Kbd>
+              <span>preview</span>
             </div>
           </div>
         </div>
