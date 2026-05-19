@@ -245,7 +245,7 @@ function ListRow({
         background: selected ? t.bgSelected : 'transparent',
         cursor: 'pointer',
         position: 'relative',
-        boxShadow: selected ? `inset 3px 0 0 ${t.accent}` : 'none',
+        boxShadow: 'none',
         transition:
           'background var(--duration-fast) var(--easing-standard), box-shadow var(--duration-fast) var(--easing-standard)',
       }}
@@ -661,7 +661,7 @@ export function Library({
               borderRadius: 3,
             }}
           >
-            v0.6.3
+            v0.6.4
           </span>
         </div>
         <div style={{ display: 'flex', alignSelf: 'stretch' }}>
