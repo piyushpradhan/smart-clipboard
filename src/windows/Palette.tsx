@@ -75,7 +75,7 @@ function PaletteRow({
         padding: `${t.dense ? 8 : 10}px 12px`,
         borderRadius: 8,
         background: selected ? t.bgSelected : 'transparent',
-        boxShadow: selected ? `inset 3px 0 0 ${t.accent}` : 'none',
+        boxShadow: 'none',
         cursor: 'pointer',
         position: 'relative',
         transition:

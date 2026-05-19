@@ -16,14 +16,16 @@ body,
 
 /* Override ember's default font stack — Geist gives the UI more character
  * than Inter without losing the geometric crispness ember's tokens assume.
- * JetBrains Mono stays as the fallback for mono since Geist Mono ships
- * fewer weights at small sizes. */
+ * @fontsource ships Geist Sans under the family name 'Geist Sans' (not
+ * 'Geist'); the previous value silently fell through to Inter because no
+ * loaded face matched. */
 :root {
-  --font-sans: 'Geist', 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui,
+  --font-sans:
+    'Geist Sans', 'Inter', 'Segoe UI Variable', 'Segoe UI', system-ui,
     sans-serif;
-  --font-display: 'Geist', var(--font-sans);
-  --font-mono: 'Geist Mono', 'JetBrains Mono', 'Cascadia Code', ui-monospace,
-    monospace;
+  --font-display: 'Geist Sans', var(--font-sans);
+  --font-mono:
+    'Geist Mono', 'JetBrains Mono', 'Cascadia Code', ui-monospace, monospace;
 }
 
 body {
